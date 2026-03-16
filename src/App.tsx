@@ -20,8 +20,11 @@ function AppInner() {
   const { authState, signOut } = useAuth()
   const location = useLocation()
 
-  // /lp は認証不要で常に表示
+  // /lp はトークンが一致する場合のみ表示
   if (location.pathname === '/lp') {
+    const params = new URLSearchParams(location.search)
+    const valid = params.get('token') === import.meta.env.VITE_LP_TOKEN
+    if (!valid) return <div className="min-h-screen bg-stone-50 flex items-center justify-center text-neutral-400 text-sm">Not found</div>
     return <LPPage />
   }
 
