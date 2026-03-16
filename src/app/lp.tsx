@@ -84,7 +84,7 @@ export default function LPPage() {
 
         {/* Headline */}
         <div className="relative z-10 text-center max-w-3xl mx-auto mb-6">
-          <h1 className="text-[56px] sm:text-[72px] lg:text-[88px] font-black text-neutral-950 leading-[0.95] tracking-[-0.04em]">
+          <h1 className="text-[56px] sm:text-[72px] lg:text-[88px] font-black text-neutral-950 leading-[0.95] tracking-[-0.04em]" style={{ fontFamily: "'Shippori Mincho', serif" }}>
             散らばった<br />
             知識が、<br />
             <span style={{ WebkitTextStroke: '2px #0a0a0a', color: 'transparent' }}>
@@ -206,7 +206,7 @@ export default function LPPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-xs font-bold tracking-[0.15em] text-neutral-400 uppercase mb-5">Problem</p>
-            <h2 className="text-[42px] sm:text-[56px] font-black text-neutral-950 leading-[1.0] tracking-[-0.03em] mb-16 max-w-xl">
+            <h2 className="text-[42px] sm:text-[56px] font-black text-neutral-950 leading-[1.0] tracking-[-0.03em] mb-16 max-w-xl" style={{ fontFamily: "'Shippori Mincho', serif" }}>
               チームの知識、<br />
               ちゃんと<br />
               活きていますか？
@@ -242,7 +242,7 @@ export default function LPPage() {
               <div className="p-10 flex flex-col justify-between">
                 <div>
                   <p className="text-[10px] font-bold tracking-widest text-neutral-500 mb-4">01 — VISUALIZE</p>
-                  <h3 className="text-3xl font-black text-white leading-tight tracking-tight mb-4">カンバス<br />＆グラフ</h3>
+                  <h3 className="text-3xl font-black text-white leading-tight tracking-tight mb-4" style={{ fontFamily: "'Shippori Mincho', serif" }}>カンバス<br />＆グラフ</h3>
                   <p className="text-neutral-400 text-sm leading-relaxed">知識の全体像を俯瞰。カードを置いて関係性を線でつなぐと、チームの思考が地図になる。</p>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-6">
@@ -282,7 +282,7 @@ export default function LPPage() {
               <div className="rounded-3xl border border-neutral-200 bg-white overflow-hidden h-full">
                 <div className="p-8">
                   <p className="text-[10px] font-bold tracking-widest text-neutral-400 mb-4">02 — ORGANIZE</p>
-                  <h3 className="text-2xl font-black text-neutral-950 leading-tight tracking-tight mb-3">クラスター<br />＆バンドル</h3>
+                  <h3 className="text-2xl font-black text-neutral-950 leading-tight tracking-tight mb-3" style={{ fontFamily: "'Shippori Mincho', serif" }}>クラスター<br />＆バンドル</h3>
                   <p className="text-neutral-500 text-sm leading-relaxed">カテゴリ別に束ねて整理。散らかってきたら一発でまとめられる。</p>
                 </div>
                 <div className="px-8 pb-8 flex gap-3 justify-center">
@@ -315,7 +315,7 @@ export default function LPPage() {
               <div className="rounded-3xl border border-neutral-200 bg-white overflow-hidden h-full">
                 <div className="p-8">
                   <p className="text-[10px] font-bold tracking-widest text-neutral-400 mb-4">03 — AI</p>
-                  <h3 className="text-2xl font-black text-neutral-950 leading-tight tracking-tight mb-3">AIチャット<br />＆サマリー</h3>
+                  <h3 className="text-2xl font-black text-neutral-950 leading-tight tracking-tight mb-3" style={{ fontFamily: "'Shippori Mincho', serif" }}>AIチャット<br />＆サマリー</h3>
                   <p className="text-neutral-500 text-sm leading-relaxed">蓄積したナレッジをAIが要約・回答。「あの話どこだっけ」が0秒で解決。</p>
                 </div>
                 <div className="px-8 pb-8 space-y-2">
@@ -340,7 +340,7 @@ export default function LPPage() {
         <div className="max-w-5xl mx-auto grid sm:grid-cols-2 gap-16 items-center">
           <Reveal>
             <p className="text-xs font-bold tracking-[0.15em] text-neutral-400 uppercase mb-5">How to start</p>
-            <h2 className="text-[42px] sm:text-[52px] font-black text-neutral-950 leading-[1.0] tracking-[-0.03em] mb-10">
+            <h2 className="text-[42px] sm:text-[52px] font-black text-neutral-950 leading-[1.0] tracking-[-0.03em] mb-10" style={{ fontFamily: "'Shippori Mincho', serif" }}>
               3ステップで、<br />今日から。
             </h2>
             <div className="space-y-8">
@@ -400,7 +400,7 @@ export default function LPPage() {
                 style={{ backgroundImage: 'radial-gradient(ellipse at 50% 0%, #7c3aed20 0%, transparent 60%)' }} />
               <div className="relative z-10">
                 <p className="text-xs font-bold tracking-[0.15em] text-neutral-500 uppercase mb-6">Get Started</p>
-                <h2 className="text-[42px] sm:text-[60px] font-black text-white leading-[1.0] tracking-[-0.03em] mb-4">
+                <h2 className="text-[42px] sm:text-[60px] font-black text-white leading-[1.0] tracking-[-0.03em] mb-4" style={{ fontFamily: "'Shippori Mincho', serif" }}>
                   Goodpatchのナレッジを、<br />
                   <span style={{ WebkitTextStroke: '1.5px #ffffff', color: 'transparent' }}>Vaultに。</span>
                 </h2>
