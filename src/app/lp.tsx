@@ -56,13 +56,13 @@ export default function LPPage() {
       <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-200 ${scrolled ? 'bg-white/95 backdrop-blur-sm border-b border-neutral-200/80' : ''}`}>
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-neutral-900 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-md bg-neutral-600 flex items-center justify-center">
               <span className="text-white text-[10px] font-black">V</span>
             </div>
             <span className="font-black text-neutral-900 tracking-tight text-sm">Vault</span>
           </div>
           <a href={APP_URL}
-            className="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">
+            className="flex items-center gap-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">
             <GoogleIcon />
             ログイン
           </a>
@@ -99,7 +99,7 @@ export default function LPPage() {
 
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 mb-20">
           <a href={APP_URL}
-            className="flex items-center gap-2.5 bg-neutral-950 hover:bg-neutral-800 text-white font-semibold text-sm px-6 py-3.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-neutral-950/20">
+            className="flex items-center gap-2.5 bg-neutral-700 hover:bg-neutral-600 text-white font-semibold text-sm px-6 py-3.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-neutral-700/20">
             <GoogleIcon />
             Googleアカウントで使い始める
           </a>
@@ -110,7 +110,7 @@ export default function LPPage() {
         <div className="relative z-10 w-full max-w-3xl mx-auto" style={{ height: 400 }}>
 
           {/* Center: canvas mockup */}
-          <div className="absolute inset-x-[10%] inset-y-0 rounded-2xl bg-neutral-950 border border-neutral-800 overflow-hidden shadow-2xl shadow-neutral-950/30">
+          <div className="absolute inset-x-[10%] inset-y-0 rounded-2xl bg-neutral-600 border border-neutral-500 overflow-hidden shadow-2xl shadow-neutral-600/30">
             {/* Browser bar */}
             <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-white/10">
               <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
@@ -119,7 +119,7 @@ export default function LPPage() {
               <div className="ml-3 h-4 w-32 rounded bg-white/10" />
             </div>
             {/* Canvas */}
-            <div className="relative h-full bg-stone-950 overflow-hidden">
+            <div className="relative h-full bg-stone-600 overflow-hidden">
               <div className="absolute inset-0 opacity-[0.025]"
                 style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
               {[
@@ -238,7 +238,7 @@ export default function LPPage() {
 
           {/* Feature 01 */}
           <Reveal>
-            <div className="group rounded-3xl bg-neutral-950 overflow-hidden grid sm:grid-cols-2 min-h-[360px]">
+            <div className="group rounded-3xl bg-neutral-700 overflow-hidden grid sm:grid-cols-2 min-h-[360px]">
               <div className="p-10 flex flex-col justify-between">
                 <div>
                   <p className="text-[10px] font-bold tracking-widest text-neutral-500 mb-4">01 — VISUALIZE</p>
@@ -251,7 +251,7 @@ export default function LPPage() {
                   ))}
                 </div>
               </div>
-              <div className="relative overflow-hidden bg-stone-900 flex items-center justify-center p-6">
+              <div className="relative overflow-hidden bg-stone-500 flex items-center justify-center p-6">
                 <div className="absolute inset-0 opacity-[0.03]"
                   style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
                 <svg width="280" height="200" viewBox="0 0 280 200" className="relative z-10">
@@ -319,7 +319,7 @@ export default function LPPage() {
                   <p className="text-neutral-500 text-sm leading-relaxed">蓄積したナレッジをAIが要約・回答。「あの話どこだっけ」が0秒で解決。</p>
                 </div>
                 <div className="px-8 pb-8 space-y-2">
-                  <div className="ml-auto bg-neutral-900 text-white text-[11px] rounded-2xl rounded-tr-sm px-3.5 py-2.5 w-fit max-w-[85%]">
+                  <div className="ml-auto bg-neutral-600 text-white text-[11px] rounded-2xl rounded-tr-sm px-3.5 py-2.5 w-fit max-w-[85%]">
                     デザインシステムの導入経緯は？
                   </div>
                   <div className="bg-neutral-100 text-neutral-700 text-[11px] rounded-2xl rounded-tl-sm px-3.5 py-2.5 w-fit max-w-[90%] leading-relaxed">
@@ -360,7 +360,7 @@ export default function LPPage() {
             </div>
           </Reveal>
           <Reveal delay={150}>
-            <div className="rounded-3xl bg-neutral-950 p-6 shadow-2xl shadow-neutral-950/20">
+            <div className="rounded-3xl bg-neutral-700 p-6 shadow-2xl shadow-neutral-700/20">
               <div className="flex items-center gap-2 pb-4 border-b border-white/10 mb-4">
                 <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center">
                   <span className="text-white text-[9px] font-black">V</span>
@@ -395,7 +395,7 @@ export default function LPPage() {
       <section className="py-8 px-6 pb-24">
         <div className="max-w-5xl mx-auto">
           <Reveal>
-            <div className="rounded-3xl bg-neutral-950 px-10 py-16 text-center relative overflow-hidden">
+            <div className="rounded-3xl bg-neutral-700 px-10 py-16 text-center relative overflow-hidden">
               <div className="absolute inset-0 pointer-events-none"
                 style={{ backgroundImage: 'radial-gradient(ellipse at 50% 0%, #7c3aed20 0%, transparent 60%)' }} />
               <div className="relative z-10">
@@ -423,7 +423,7 @@ export default function LPPage() {
       <footer className="py-8 px-6 border-t border-neutral-100">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-neutral-900 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
               <span className="text-white text-[8px] font-black">V</span>
             </div>
             <span className="text-xs text-neutral-400 font-medium">Vault — Goodpatch internal</span>
