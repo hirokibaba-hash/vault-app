@@ -296,15 +296,6 @@ const CLUSTER_CONFIG: Record<Cluster, {
   },
 }
 
-// Timeline months
-const MONTHS = [
-  { label: '2024年 8月', x: 380 },
-  { label: '9月', x: 700 },
-  { label: '10月', x: 1000 },
-  { label: '11月', x: 1400 },
-  { label: '12月', x: 1700 },
-  { label: '2025年 1月', x: 1960 },
-]
 
 // ─── Graph layout positions (pre-computed force-directed) ──────────────────────
 // Nodes positioned by relationship proximity:
@@ -2547,7 +2538,7 @@ export default function CanvasPage() {
           onClose={() => setSelected(null)}
           onDelete={() => deleteCard(selected.id)}
           allItems={allItems}
-          onSelectItem={item => setSelected(item)}
+          onSelectItem={item => setSelected(item as KnowledgeItem)}
         />
       )}
 
