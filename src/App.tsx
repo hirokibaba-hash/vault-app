@@ -1,121 +1,113 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import { Archive, MessageSquare, Settings, Layers, LogOut } from 'lucide-react'
+import CanvasPage from './app/canvas'
+import VaultPage from './app/vault'
+import ChatPage from './app/chat'
+import SettingsPage from './app/settings'
+import LoginPage from './app/login'
+import { Toaster } from 'sonner'
+import { useAuth } from './hooks/useAuth'
 
-function App() {
-  const [count, setCount] = useState(0)
+const navItems = [
+  { to: '/', icon: Layers, label: 'キャンバス', end: true },
+  { to: '/vault', icon: Archive, label: 'リスト' },
+  { to: '/chat', icon: MessageSquare, label: 'AIチャット' },
+  { to: '/settings', icon: Settings, label: '設定' },
+]
+
+export default function App() {
+  const { authState, signOut } = useAuth()
+
+  // Loading
+  if (authState.status === 'loading') {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-neutral-300 border-t-neutral-700 animate-spin" />
+      </div>
+    )
+  }
+
+  // Not logged in or unauthorized domain
+  if (authState.status === 'unauthenticated' || authState.status === 'unauthorized') {
+    return (
+      <>
+        <LoginPage unauthorized={authState.status === 'unauthorized' ? authState.email : undefined} />
+        <Toaster position="bottom-right" />
+      </>
+    )
+  }
+
+  // Authenticated
+  const user = authState.user
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <BrowserRouter>
+      <div className="flex flex-col h-screen bg-stone-50">
+        {/* Top bar */}
+        <header className="flex items-center justify-between px-6 py-3 bg-white border-b border-neutral-200 shrink-0 z-10">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-neutral-900 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">V</span>
+            </div>
+            <span className="font-semibold text-neutral-900 text-sm tracking-tight">Vault</span>
+          </div>
 
-      <div className="ticks"></div>
+          {/* Pill nav */}
+          <nav className="flex items-center gap-1 bg-neutral-100 rounded-full px-1 py-1">
+            {navItems.map(({ to, icon: Icon, label, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-white text-neutral-900 shadow-sm'
+                      : 'text-neutral-500 hover:text-neutral-700'
+                  }`
+                }
+              >
+                <Icon size={13} />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {/* User info + sign out */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {user.user_metadata?.avatar_url && (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt=""
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              )}
+              <span className="text-xs text-neutral-500 hidden sm:block">
+                {user.user_metadata?.full_name ?? user.email}
+              </span>
+            </div>
+            <button
+              onClick={signOut}
+              title="ログアウト"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        </header>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* Main content */}
+        <main className="flex-1 min-h-0 overflow-hidden">
+          <Routes>
+            <Route path="/" element={<div className="h-full overflow-hidden"><CanvasPage /></div>} />
+            <Route path="/vault" element={<div className="h-full overflow-y-auto"><VaultPage /></div>} />
+            <Route path="/chat" element={<div className="h-full overflow-y-auto"><ChatPage /></div>} />
+            <Route path="/settings" element={<div className="h-full overflow-y-auto"><SettingsPage /></div>} />
+          </Routes>
+        </main>
+      </div>
+      <Toaster position="bottom-right" />
+    </BrowserRouter>
   )
 }
-
-export default App
