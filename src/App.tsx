@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { Archive, MessageSquare, Settings, Layers, LogOut } from 'lucide-react'
 import CanvasPage from './app/canvas'
 import VaultPage from './app/vault'
 import ChatPage from './app/chat'
 import SettingsPage from './app/settings'
 import LoginPage from './app/login'
+import LPPage from './app/lp'
 import { Toaster } from 'sonner'
 import { useAuth } from './hooks/useAuth'
 
@@ -15,8 +16,14 @@ const navItems = [
   { to: '/settings', icon: Settings, label: '設定' },
 ]
 
-export default function App() {
+function AppInner() {
   const { authState, signOut } = useAuth()
+  const location = useLocation()
+
+  // /lp は認証不要で常に表示
+  if (location.pathname === '/lp') {
+    return <LPPage />
+  }
 
   // Loading
   if (authState.status === 'loading') {
@@ -41,7 +48,7 @@ export default function App() {
   const user = authState.user
 
   return (
-    <BrowserRouter>
+    <>
       <div className="flex flex-col h-screen bg-stone-50">
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-3 bg-white border-b border-neutral-200 shrink-0 z-10">
@@ -108,6 +115,14 @@ export default function App() {
         </main>
       </div>
       <Toaster position="bottom-right" />
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppInner />
     </BrowserRouter>
   )
 }
