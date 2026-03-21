@@ -3,6 +3,7 @@ import { Plus, ZoomIn, ZoomOut, Maximize2, Search, X, ExternalLink, Sparkles, Ca
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { supabase } from '@/lib/supabase'
 import { fetchOgp } from '@/lib/ogp'
 import type { CardLink, ChatMessage } from '@/lib/card-types'
@@ -706,6 +707,8 @@ function StackCard({
   onExpand,
   isExiting,
   isGrabbing,
+  clusterSummary,
+  summaryLoading,
 }: {
   cluster: Cluster
   clusterCards: Array<{ id: string; title: string; summary: string; hasPage: boolean }>
@@ -719,6 +722,8 @@ function StackCard({
   onExpand: () => void
   isExiting?: boolean
   isGrabbing?: boolean
+  clusterSummary?: string
+  summaryLoading?: boolean
 }) {
   const [fanned, setFanned] = useState(false)
   const [entered, setEntered] = useState(false)
@@ -727,7 +732,6 @@ function StackCard({
     return () => cancelAnimationFrame(raf)
   }, [])
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [stackQCId, setStackQCId] = useState<string | null>(null)
 
   // Close fan when clicking outside
@@ -865,10 +869,9 @@ function StackCard({
                 : `1px solid ${cfg.accent}`,
             }}
             onMouseEnter={e => { e.stopPropagation(); if (fanned) setHoveredId(card.id) }}
-            onMouseLeave={e => { e.stopPropagation(); setHoveredId(null); setDeleteConfirmId(null) }}
+            onMouseLeave={e => { e.stopPropagation(); setHoveredId(null) }}
             onClick={e => {
               if (!fanned) return
-              if (deleteConfirmId === card.id) return
               e.stopPropagation()
               onCardClick(card.id)
             }}
@@ -879,33 +882,70 @@ function StackCard({
               {/* When collapsed and this is the front (top) card: colored thumbnail */}
               {isTopCard && !fanned ? (
                 <>
-                  {/* Cluster icon */}
-                  {(() => { const Icon = CLUSTER_ICON[cluster]; return (
-                    <div style={{ marginBottom: 4 }}>
-                      <Icon size={28} color="rgba(255,255,255,0.85)" strokeWidth={1.6} />
+                  {/* Header row: icon + label */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    {(() => { const Icon = CLUSTER_ICON[cluster]; return (
+                      <Icon size={20} color="rgba(255,255,255,0.9)" strokeWidth={1.6} />
+                    )})()}
+                    <p style={{
+                      fontSize: 13, fontWeight: 700, color: 'white',
+                      lineHeight: 1.2, margin: 0, letterSpacing: '-0.01em',
+                    }}>
+                      {cfg.label}
+                    </p>
+                    <span style={{
+                      marginLeft: 'auto', fontSize: 8.5, fontWeight: 600,
+                      color: 'rgba(255,255,255,0.6)',
+                      background: 'rgba(255,255,255,0.15)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: 4, padding: '1px 5px', whiteSpace: 'nowrap',
+                    }}>
+                      {N} cards
+                    </span>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '2px 0' }} />
+
+                  {/* Summary area */}
+                  {summaryLoading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                      <div style={{
+                        width: 10, height: 10, borderRadius: '50%',
+                        border: '1.5px solid rgba(255,255,255,0.3)',
+                        borderTopColor: 'rgba(255,255,255,0.8)',
+                        animation: 'spin 0.7s linear infinite',
+                        flexShrink: 0,
+                      }} />
+                      <p style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+                        サマリーを生成中...
+                      </p>
                     </div>
-                  )})()}
-                  {/* Category label */}
-                  <p style={{
-                    fontSize: 16, fontWeight: 700, color: 'white',
-                    lineHeight: 1.2, margin: 0, letterSpacing: '-0.01em',
-                  }}>
-                    {cfg.label}
-                  </p>
-                  {/* Card count */}
-                  <p style={{
-                    fontSize: 10, color: 'rgba(255,255,255,0.55)',
-                    margin: 0, marginTop: 2,
-                  }}>
-                    {N} cards
-                  </p>
-                  {/* Hover hint */}
-                  <p style={{
-                    fontSize: 9, color: 'rgba(255,255,255,0.38)',
-                    margin: 0, marginTop: 'auto',
-                  }}>
-                    hover to preview
-                  </p>
+                  ) : clusterSummary ? (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                        <Sparkles size={8} color="rgba(255,255,255,0.55)" />
+                        <p style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.55)', margin: 0, fontWeight: 600, letterSpacing: '0.04em' }}>
+                          AI INSIGHT
+                        </p>
+                      </div>
+                      <p style={{
+                        fontSize: 10, color: 'rgba(255,255,255,0.88)',
+                        lineHeight: 1.55, margin: 0, flex: 1,
+                        display: '-webkit-box', WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}>
+                        {clusterSummary}
+                      </p>
+                    </>
+                  ) : (
+                    <p style={{
+                      fontSize: 9, color: 'rgba(255,255,255,0.38)',
+                      margin: 0, marginTop: 'auto',
+                    }}>
+                      hover to preview
+                    </p>
+                  )}
                 </>
               ) : fanned ? (
                 <>
@@ -922,21 +962,10 @@ function StackCard({
                     </span>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3 }}>
                       {card.hasPage && <div style={{ color: '#ccc' }}><FileText size={9} /></div>}
-                      {/* Delete confirm or trash icon */}
-                      {deleteConfirmId === card.id ? (
-                        <>
-                          <button onMouseDown={e => e.stopPropagation()}
-                            onClick={e => { e.stopPropagation(); onCardDelete(card.id); setDeleteConfirmId(null) }}
-                            style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 5, border: '1px solid #fca5a5', backgroundColor: '#fee2e2', color: '#dc2626', cursor: 'pointer', lineHeight: 1.4 }}
-                          >削除</button>
-                          <button onMouseDown={e => e.stopPropagation()}
-                            onClick={e => { e.stopPropagation(); setDeleteConfirmId(null) }}
-                            style={{ fontSize: 9, padding: '2px 5px', borderRadius: 5, border: '1px solid rgba(0,0,0,0.1)', backgroundColor: 'rgba(0,0,0,0.04)', color: '#888', cursor: 'pointer', lineHeight: 1.4 }}
-                          >✕</button>
-                        </>
-                      ) : isCardHovered && (
+                      {/* Trash button */}
+                      {isCardHovered && (
                         <button onMouseDown={e => e.stopPropagation()}
-                          onClick={e => { e.stopPropagation(); setDeleteConfirmId(card.id) }}
+                          onClick={e => { e.stopPropagation(); onCardDelete(card.id) }}
                           style={{ width: 20, height: 20, borderRadius: 6, border: '1px solid rgba(0,0,0,0.1)', backgroundColor: 'rgba(0,0,0,0.04)', color: '#bbb', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', padding: 0 }}
                           onMouseEnter={e => { const el = e.currentTarget; el.style.backgroundColor = '#fee2e2'; el.style.color = '#ef4444'; el.style.borderColor = '#fca5a5' }}
                           onMouseLeave={e => { const el = e.currentTarget; el.style.backgroundColor = 'rgba(0,0,0,0.04)'; el.style.color = '#bbb'; el.style.borderColor = 'rgba(0,0,0,0.1)' }}
@@ -977,7 +1006,7 @@ function StackCard({
                       {card.summary}
                     </p>
                   )}
-                  {isCardHovered && deleteConfirmId !== card.id && (
+                  {isCardHovered && (
                     <p style={{ fontSize: 9, color: cfg.accent, marginTop: 'auto', fontWeight: 500 }}>
                       クリックで選択 →
                     </p>
@@ -988,6 +1017,72 @@ function StackCard({
           </div>
         )
       })}
+
+      {/* Summary card — shown at arc center when fanned, acts as cover when collapsed */}
+      {fanned && (clusterSummary || summaryLoading) && (
+        <div
+          style={{
+            position: 'absolute',
+            left: CPX - Math.round(CARD_W / 2),
+            top:  CPY - Math.round(CARD_H / 2),
+            width: CARD_W,
+            height: CARD_H,
+            transform: 'translate(0px, 0px) rotate(0deg)',
+            transformOrigin: '50% 50%',
+            zIndex: 0,
+            borderRadius: 14,
+            overflow: 'hidden',
+            backgroundColor: cfg.accent,
+            border: `1px solid ${cfg.accent}`,
+            boxShadow: `0 4px 20px ${cfg.accent}44, 0 1px 4px ${cfg.accent}22`,
+            pointerEvents: 'none',
+            transition: [
+              'transform 0.42s cubic-bezier(0.34,1.56,0.64,1)',
+              'opacity 0.28s ease',
+            ].join(', '),
+          }}
+        >
+          <div style={{ padding: '13px 14px 11px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {(() => { const Icon = CLUSTER_ICON[cluster]; return (
+                <Icon size={16} color="rgba(255,255,255,0.85)" strokeWidth={1.6} />
+              )})()}
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'white', margin: 0, letterSpacing: '-0.01em' }}>
+                {cfg.label}
+              </p>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Sparkles size={8} color="rgba(255,255,255,0.7)" />
+                <p style={{ fontSize: 8, fontWeight: 600, color: 'rgba(255,255,255,0.7)', margin: 0, letterSpacing: '0.05em' }}>
+                  AI INSIGHT
+                </p>
+              </div>
+            </div>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.18)' }} />
+            {/* Summary */}
+            {summaryLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, justifyContent: 'center' }}>
+                <div style={{
+                  width: 12, height: 12, borderRadius: '50%',
+                  border: '1.5px solid rgba(255,255,255,0.3)',
+                  borderTopColor: 'rgba(255,255,255,0.85)',
+                  animation: 'spin 0.7s linear infinite',
+                }} />
+                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', margin: 0 }}>生成中...</p>
+              </div>
+            ) : (
+              <p style={{
+                fontSize: 10.5, color: 'rgba(255,255,255,0.9)',
+                lineHeight: 1.6, margin: 0,
+                display: '-webkit-box', WebkitLineClamp: 5,
+                WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                {clusterSummary}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1048,7 +1143,6 @@ function ItemCard({
   affinityTags?: string[]
 }) {
   const cfg = CLUSTER_CONFIG[item.cluster]
-  const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   // For expanding animation: start at bundleFrom, animate to actual posX/posY after one frame
   const [expandFromPos, setExpandFromPos] = useState<{ x: number; y: number } | null>(
@@ -1059,11 +1153,6 @@ function ItemCard({
     const raf = requestAnimationFrame(() => setExpandFromPos(null))
     return () => cancelAnimationFrame(raf)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Reset delete confirm when card is no longer hovered
-  useEffect(() => {
-    if (!isHovered) setDeleteConfirm(false)
-  }, [isHovered])
 
   const isCollapsing = bundleAnim === 'collapsing'
   const isExpanding  = bundleAnim === 'expanding'
@@ -1145,38 +1234,11 @@ function ItemCard({
                   <FileText size={9} />
                 </div>
               )}
-              {/* Delete confirmation inline */}
-              {deleteConfirm && isHovered && (
-                <div
-                  onMouseDown={e => e.stopPropagation()}
-                  onClick={e => e.stopPropagation()}
-                  style={{ display: 'flex', alignItems: 'center', gap: 3 }}
-                >
-                  <button
-                    onClick={() => { onDelete(); setDeleteConfirm(false) }}
-                    style={{
-                      fontSize: 9, fontWeight: 600, padding: '2px 6px',
-                      borderRadius: 5, border: '1px solid #fca5a5',
-                      backgroundColor: '#fee2e2', color: '#dc2626',
-                      cursor: 'pointer', lineHeight: 1.4,
-                    }}
-                  >削除</button>
-                  <button
-                    onClick={() => setDeleteConfirm(false)}
-                    style={{
-                      fontSize: 9, padding: '2px 5px',
-                      borderRadius: 5, border: '1px solid rgba(0,0,0,0.1)',
-                      backgroundColor: 'rgba(0,0,0,0.04)', color: '#888',
-                      cursor: 'pointer', lineHeight: 1.4,
-                    }}
-                  >✕</button>
-                </div>
-              )}
-              {/* Trash button — show on hover when not in confirm mode */}
-              {isHovered && !deleteConfirm && (
+              {/* Trash button */}
+              {isHovered && (
                 <button
                   onMouseDown={e => e.stopPropagation()}
-                  onClick={e => { e.stopPropagation(); setDeleteConfirm(true) }}
+                  onClick={e => { e.stopPropagation(); onDelete() }}
                   style={{
                     width: 20, height: 20, borderRadius: 6,
                     border: '1px solid rgba(0,0,0,0.1)',
@@ -1340,6 +1402,7 @@ export default function CanvasPage() {
   const [cardUpdatedAt, setCardUpdatedAt] = useState<Record<string, string>>({})
   const [cardAssignees, setCardAssignees] = useState<Record<string, string[]>>({})
   const [cardTitles, setCardTitles] = useState<Record<string, string>>({})
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bundledClusters, setBundledClusters] = useState<Set<Cluster>>(new Set())
   const [connectionMode, setConnectionMode] = useState<'none' | 'explicit' | 'all'>('explicit')
   // Snapshot positions for bundled stacks — prevents centroid drift when cards are added/moved
@@ -1484,6 +1547,21 @@ export default function CanvasPage() {
   const [stackGrabbing, setStackGrabbing] = useState<Cluster | null>(null)
   const cardPositionsRef = useRef(cardPositions)
   useEffect(() => { cardPositionsRef.current = cardPositions }, [cardPositions])
+  const cardTitlesRef = useRef(cardTitles)
+  useEffect(() => { cardTitlesRef.current = cardTitles }, [cardTitles])
+  const cardSummariesRef = useRef(cardSummaries)
+  useEffect(() => { cardSummariesRef.current = cardSummaries }, [cardSummaries])
+  const cardBodiesRef = useRef(cardBodies)
+  useEffect(() => { cardBodiesRef.current = cardBodies }, [cardBodies])
+  const cardNotesRef = useRef(cardNotes)
+  useEffect(() => { cardNotesRef.current = cardNotes }, [cardNotes])
+  const cardLinksRef = useRef(cardLinks)
+  useEffect(() => { cardLinksRef.current = cardLinks }, [cardLinks])
+  const cardMessagesRef = useRef(cardMessages)
+  useEffect(() => { cardMessagesRef.current = cardMessages }, [cardMessages])
+
+  const [clusterSummaries, setClusterSummaries] = useState<Partial<Record<Cluster, string>>>({})
+  const [clusterSummaryLoading, setClusterSummaryLoading] = useState<Partial<Record<Cluster, boolean>>>({})
 
   // Mirror state to refs so event handlers always read the latest value
   // without needing to be recreated on every render.
@@ -1562,7 +1640,8 @@ export default function CanvasPage() {
       .filter(i => i.cluster === cluster)
       .forEach(item => {
         startPositions[item.id] = cardPositionsRef.current[item.id]
-          ?? (layoutModeRef.current === 'graph' ? GRAPH_POS[item.id] : { x: item.x, y: item.y })
+          ?? GRAPH_POS[item.id]
+          ?? { x: item.x, y: item.y }
       })
     const startX = e.clientX
     const startY = e.clientY
@@ -1826,6 +1905,36 @@ export default function CanvasPage() {
     return { x: avgX, y: avgY }
   }, [allItems, cardPositions, layoutMode])
 
+  const generateClusterSummary = useCallback(async (cluster: Cluster) => {
+    const items = allItemsRef.current.filter(i => i.cluster === cluster)
+    if (items.length === 0) return
+    const cards = items.map(i => ({
+      title: cardTitlesRef.current[i.id] ?? i.title,
+      summary: cardSummariesRef.current[i.id] ?? '',
+      body: cardBodiesRef.current[i.id] ?? '',
+      notes: cardNotesRef.current[i.id] ?? '',
+      links: (cardLinksRef.current[i.id] ?? []).map(l => ({
+        title: l.title, url: l.url, description: l.description ?? '',
+      })),
+      messages: (cardMessagesRef.current[i.id] ?? [])
+        .filter(m => m.role === 'assistant')
+        .map(m => m.content)
+        .join('\n'),
+    }))
+    setClusterSummaryLoading(prev => ({ ...prev, [cluster]: true }))
+    setClusterSummaries(prev => ({ ...prev, [cluster]: undefined }))
+    try {
+      const { data, error } = await supabase.functions.invoke('summarize-cluster', {
+        body: { cards, clusterLabel: CLUSTER_CONFIG[cluster].label },
+      })
+      if (!error && data?.summary) {
+        setClusterSummaries(prev => ({ ...prev, [cluster]: data.summary }))
+      }
+    } finally {
+      setClusterSummaryLoading(prev => ({ ...prev, [cluster]: false }))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const collapseCluster = useCallback((cluster: Cluster) => {
     if (bundledClusters.has(cluster)) return
     const snap = getClusterCentroid(cluster)
@@ -1833,7 +1942,8 @@ export default function CanvasPage() {
     setCollapsingClusters(new Set([cluster]))
     setTimeout(() => { setBundledClusters(prev => new Set([...prev, cluster])) }, 400)
     setTimeout(() => { setCollapsingClusters(new Set()) }, 500)
-  }, [bundledClusters, getClusterCentroid])
+    generateClusterSummary(cluster)
+  }, [bundledClusters, getClusterCentroid, generateClusterSummary])
 
   // ── Connections ──
   const connPairs: Array<[KnowledgeItem, KnowledgeItem]> = []
@@ -2330,7 +2440,7 @@ export default function CanvasPage() {
                 isSelected={selected?.id === item.id}
                 isHovered={hovered === item.id}
                 isFaded={!!matchIds && !matchIds.has(item.id)}
-                isDragging={draggingCardId === item.id}
+                isDragging={draggingCardId === item.id || stackGrabbing === item.cluster}
                 hasPage={!!(cardBodies[item.id]?.trim())}
                 degree={layoutMode === 'graph' ? NODE_DEGREE[item.id] : undefined}
                 onClick={() => {
@@ -2364,7 +2474,7 @@ export default function CanvasPage() {
                 }}
                 onQuickAdd={(value) => handleQuickAdd(item.id, value)}
                 onQuickCaptureClose={() => setQuickCaptureId(null)}
-                onDelete={() => deleteCard(item.id)}
+                onDelete={() => setPendingDeleteId(item.id)}
                 bundleAnim={isCollapsing ? 'collapsing' : isExpanding ? 'expanding' : undefined}
                 bundleFrom={isExpanding ? (expandFromPos[item.cluster] ?? centroid) : undefined}
                 animDelay={stagger}
@@ -2384,21 +2494,23 @@ export default function CanvasPage() {
             .map(cluster => {
               const centroid = getClusterCentroid(cluster)
               const cfg = CLUSTER_CONFIG[cluster]
+              const clusterItems = allItems.filter(i => i.cluster === cluster)
+              const minY = Math.min(...clusterItems.map(i => (cardPositions[i.id] ?? { x: i.x, y: i.y }).y))
               return (
                 <div
                   key={`collapse-btn-${cluster}`}
                   style={{
                     position: 'absolute',
                     left: centroid.x + CARD_W / 2,
-                    top: centroid.y - 44,
+                    top: minY - 40,
                     transform: 'translateX(-50%)',
                     pointerEvents: 'auto',
                     zIndex: 20,
                   }}
-                  onMouseDown={e => e.stopPropagation()}
+                  onMouseDown={e => { e.stopPropagation(); onStackMouseDown(e, cluster) }}
                 >
                   <button
-                    onClick={() => collapseCluster(cluster)}
+                    onClick={() => { if (stackDragMoved.current) return; collapseCluster(cluster) }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -2410,7 +2522,7 @@ export default function CanvasPage() {
                       color: cfg.accent,
                       fontSize: 11,
                       fontWeight: 500,
-                      cursor: 'pointer',
+                      cursor: 'grab',
                       whiteSpace: 'nowrap',
                       backdropFilter: 'blur(6px)',
                       boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
@@ -2463,10 +2575,12 @@ export default function CanvasPage() {
                   onStackMouseDown={e => onStackMouseDown(e, cluster)}
                   stackDragMoved={stackDragMoved}
                   onExpand={() => expandCluster(cluster)}
-                  onCardDelete={id => deleteCard(id)}
+                  onCardDelete={id => setPendingDeleteId(id)}
                   onCardQuickAdd={(id, value) => handleQuickAdd(id, value)}
                   isExiting={exitingBundleClusters.has(cluster)}
                   isGrabbing={stackGrabbing === cluster}
+                  clusterSummary={clusterSummaries[cluster]}
+                  summaryLoading={clusterSummaryLoading[cluster]}
                 />
               )
             })
@@ -2536,7 +2650,7 @@ export default function CanvasPage() {
           }}
           onOpenPage={() => setShowPage(true)}
           onClose={() => setSelected(null)}
-          onDelete={() => deleteCard(selected.id)}
+          onDelete={() => setPendingDeleteId(selected.id)}
           allItems={allItems}
           onSelectItem={item => setSelected(item as KnowledgeItem)}
         />
@@ -2742,6 +2856,7 @@ export default function CanvasPage() {
               setTimeout(() => {
                 setCollapsingClusters(new Set())
               }, 450)
+              allClusters.forEach(c => generateClusterSummary(c))
             }
           }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-medium backdrop-blur-sm shadow-sm transition-colors ${
@@ -2832,6 +2947,33 @@ export default function CanvasPage() {
           onCreate={addCard}
         />
       )}
+
+      {/* Delete confirmation modal */}
+      <Dialog open={pendingDeleteId !== null} onOpenChange={open => { if (!open) setPendingDeleteId(null) }}>
+        <DialogContent showCloseButton={false} className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>カードを削除しますか？</DialogTitle>
+            <DialogDescription>
+              「{pendingDeleteId ? (cardTitles[pendingDeleteId] ?? allItems.find(i => i.id === pendingDeleteId)?.title ?? 'このカード') : ''}」を削除します。この操作は取り消せません。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-t-0 bg-transparent -mx-0 -mb-0 px-0 pb-0 pt-2 flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setPendingDeleteId(null)}>
+              キャンセル
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => {
+                if (pendingDeleteId) deleteCard(pendingDeleteId)
+                setPendingDeleteId(null)
+              }}
+            >
+              削除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

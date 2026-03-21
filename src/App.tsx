@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
-import { Archive, MessageSquare, Settings, Layers, LogOut } from 'lucide-react'
+import { Archive, MessageSquare, Settings, Layers, LogOut, User } from 'lucide-react'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import CanvasPage from './app/canvas'
 import VaultPage from './app/vault'
 import ChatPage from './app/chat'
@@ -8,6 +10,28 @@ import LoginPage from './app/login'
 import LPPage from './app/lp'
 import { Toaster } from 'sonner'
 import { useAuth } from './hooks/useAuth'
+
+function UserAvatar({ user }: { user: SupabaseUser }) {
+  const [imgError, setImgError] = useState(false)
+  const src = user.user_metadata?.avatar_url ?? user.user_metadata?.picture
+
+  if (!src || imgError) {
+    return (
+      <div className="w-6 h-6 rounded-full bg-neutral-200 flex items-center justify-center">
+        <User size={12} className="text-neutral-500" />
+      </div>
+    )
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      referrerPolicy="no-referrer"
+      className="w-6 h-6 rounded-full object-cover"
+      onError={() => setImgError(true)}
+    />
+  )
+}
 
 const navItems = [
   { to: '/', icon: Layers, label: 'キャンバス', end: true },
@@ -86,13 +110,7 @@ function AppInner() {
           {/* User info + sign out */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              {user.user_metadata?.avatar_url && (
-                <img
-                  src={user.user_metadata.avatar_url}
-                  alt=""
-                  className="w-6 h-6 rounded-full object-cover"
-                />
-              )}
+              <UserAvatar user={user} />
               <span className="text-xs text-neutral-500 hidden sm:block">
                 {user.user_metadata?.full_name ?? user.email}
               </span>

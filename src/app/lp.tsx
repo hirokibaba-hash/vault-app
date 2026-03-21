@@ -1,6 +1,95 @@
 import { useEffect, useRef, useState } from 'react'
+import { Monitor, Palette, Database, Sparkles, FileText, Plus } from 'lucide-react'
 
 const APP_URL = 'https://vault-app-lemon-nine.vercel.app'
+
+// ── Cluster config (mirrored from product) ────────────────────────────────────
+const CLUSTERS = {
+  design:   { label: 'デザイン / UX',  accent: '#8b5cf6', Icon: Palette },
+  frontend: { label: 'フロントエンド', accent: '#3b82f6', Icon: Monitor },
+  ai:       { label: 'AI',             accent: '#f59e0b', Icon: Sparkles },
+  backend:  { label: 'バックエンド',   accent: '#10b981', Icon: Database },
+}
+type Cluster = keyof typeof CLUSTERS
+
+// ── Faithful reproduction of the actual Vault card ───────────────────────────
+function VaultCard({
+  cluster, title, summary, assignees = [], date = '', hasPage = false,
+  style,
+}: {
+  cluster: Cluster; title: string; summary: string
+  assignees?: { name: string; color: string }[]
+  date?: string; hasPage?: boolean
+  style?: React.CSSProperties
+}) {
+  const cfg = CLUSTERS[cluster]
+  return (
+    <div style={{
+      width: 224,
+      borderRadius: 14,
+      backgroundColor: 'white',
+      border: '1px solid rgba(0,0,0,0.07)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 16px 40px -6px rgba(0,0,0,0.12)',
+      overflow: 'hidden',
+      pointerEvents: 'none',
+      ...style,
+    }}>
+      <div style={{ padding: '13px 14px 11px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {/* Top row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            fontSize: 9.5, fontWeight: 600, letterSpacing: '0.02em',
+            color: cfg.accent, backgroundColor: `${cfg.accent}12`,
+            border: `1px solid ${cfg.accent}28`, borderRadius: 6,
+            padding: '2px 7px', lineHeight: 1.4,
+          }}>{cfg.label}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
+            {hasPage && <FileText size={9} color="#ccc" />}
+            <div style={{
+              width: 20, height: 20, borderRadius: 6,
+              border: '1px solid rgba(0,0,0,0.1)',
+              backgroundColor: 'rgba(0,0,0,0.04)', color: '#999',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}><Plus size={11} /></div>
+          </div>
+        </div>
+        {/* Title */}
+        <p style={{
+          fontSize: 12.5, fontWeight: 600, color: '#111',
+          lineHeight: 1.45, margin: 0,
+          display: '-webkit-box', WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>{title}</p>
+        {/* Summary */}
+        <p style={{
+          fontSize: 10, color: summary ? '#999' : '#ccc',
+          lineHeight: 1.65, margin: 0,
+          display: '-webkit-box', WebkitLineClamp: 3,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>{summary || 'サマリーなし'}</p>
+        {/* Footer */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 2 }}>
+          {assignees.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {assignees.map((a, i) => (
+                <div key={a.name} style={{
+                  width: 18, height: 18, borderRadius: '50%',
+                  backgroundColor: a.color, border: '1.5px solid white',
+                  marginLeft: i > 0 ? -5 : 0, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  fontSize: 7.5, fontWeight: 700, color: 'white',
+                  zIndex: assignees.length - i, position: 'relative',
+                }}>{a.name.charAt(0)}</div>
+              ))}
+            </div>
+          )}
+          {date && <span style={{ fontSize: 9, color: '#bbb' }}>{date}</span>}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Fade-in on scroll ─────────────────────────────────────────────────────────
 function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -19,14 +108,6 @@ function Reveal({ children, delay = 0, className = '' }: { children: React.React
   )
 }
 
-// ── Floating card wrapper ─────────────────────────────────────────────────────
-function Float({ children, style, className = '' }: { children: React.ReactNode; style?: React.CSSProperties; className?: string }) {
-  return (
-    <div className={`absolute bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.10)] border border-neutral-100 ${className}`} style={style}>
-      {children}
-    </div>
-  )
-}
 
 // ── Google icon ───────────────────────────────────────────────────────────────
 function GoogleIcon() {
@@ -70,365 +151,517 @@ export default function LPPage() {
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16 overflow-hidden">
+      <section className="relative overflow-hidden" style={{ minHeight: '100svh', backgroundColor: '#EEEAE4' }}>
 
-        {/* Subtle background texture */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #f3f0ff 0%, transparent 50%), radial-gradient(circle at 80% 20%, #fef9ec 0%, transparent 40%)' }} />
+        {/* Canvas dot grid — authentic canvas texture */}
+        <div className="absolute inset-0"
+          style={{ backgroundImage: 'radial-gradient(circle, #b8b3ab 1px, transparent 1px)', backgroundSize: '28px 28px', opacity: 0.55 }} />
 
-        {/* Badge */}
-        <div className="relative z-10 mb-8 flex items-center gap-2 bg-white border border-neutral-200 rounded-full px-4 py-1.5 shadow-sm text-xs font-medium text-neutral-500">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          Goodpatch 社内ナレッジ管理ツール
+        {/* ── Scattered VaultCards ── */}
+        <div className="absolute inset-0 pointer-events-none select-none">
+
+          {/* Top-left: Design card, tilted left */}
+          <div style={{ position: 'absolute', top: 96, left: '2%', transform: 'rotate(-9deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="design"
+              title="デザインシステム v3 移行計画"
+              summary="Figmaオートレイアウトを全コンポーネントに適用。デザイントークンの命名規則を統一する。"
+              assignees={[{ name: 'H', color: '#8b5cf6' }, { name: 'Y', color: '#ec4899' }]}
+              date="Mar 15"
+              hasPage
+            />
+          </div>
+
+          {/* Top-center: Frontend card, slight tilt */}
+          <div style={{ position: 'absolute', top: 68, left: '30%', transform: 'rotate(4deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="frontend"
+              title="Next.js 15 App Router 移行"
+              summary="Pages RouterからApp Routerへ段階移行。初期ロードが1.8s→0.6sに。Turbopackも導入検討。"
+              assignees={[{ name: 'T', color: '#3b82f6' }, { name: 'S', color: '#10b981' }]}
+              date="Mar 13"
+              hasPage
+            />
+          </div>
+
+          {/* Top-right: AI card, tilted right */}
+          <div style={{ position: 'absolute', top: 88, right: '1%', transform: 'rotate(11deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="ai"
+              title="GPT-4o Fine-tuning 実験メモ"
+              summary="独自データ1200件で検証。精度が標準比23%向上。コスト効率も改善された点を記録。"
+              assignees={[{ name: 'K', color: '#f59e0b' }]}
+              date="Mar 12"
+            />
+          </div>
+
+          {/* Mid-left: Backend card */}
+          <div style={{ position: 'absolute', top: '44%', left: '-1%', transform: 'rotate(6deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="backend"
+              title="Supabase RLS 設計ガイド"
+              summary="Row Level Securityで組織単位のデータ分離。サービスロールとanonキーの使い分けを整理。"
+              assignees={[{ name: 'M', color: '#10b981' }, { name: 'K', color: '#ef4444' }]}
+              date="Mar 8"
+            />
+          </div>
+
+          {/* Mid-right: Design card */}
+          <div style={{ position: 'absolute', top: '40%', right: '0%', transform: 'rotate(-8deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="design"
+              title="ユーザーインタビュー 総まとめ"
+              summary="6名のインタビューから抽出した12のインサイト。情報過多と検索性がトップペイン。"
+              assignees={[{ name: 'Y', color: '#ec4899' }, { name: 'H', color: '#8b5cf6' }]}
+              date="Mar 6"
+              hasPage
+            />
+          </div>
+
+          {/* Bottom-left: AI card */}
+          <div style={{ position: 'absolute', bottom: 140, left: '5%', transform: 'rotate(-5deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="ai"
+              title="AIチャット UI リサーチ"
+              summary="Copilot・Perplexity・Claude UIを比較分析。プロンプト入力とコンテキスト表示のベストプラクティス。"
+              assignees={[{ name: 'H', color: '#8b5cf6' }, { name: 'R', color: '#f59e0b' }]}
+              date="Mar 3"
+            />
+          </div>
+
+          {/* Bottom-right: Frontend card */}
+          <div style={{ position: 'absolute', bottom: 120, right: '3%', transform: 'rotate(7deg)', zIndex: 4 }}>
+            <VaultCard
+              cluster="frontend"
+              title="Storybook v8 移行ノート"
+              summary="CSF3形式へのリライトと、Interaction Testsの導入。ビジュアルリグレッション自動化も整備。"
+              assignees={[{ name: 'T', color: '#3b82f6' }]}
+              date="Feb 28"
+              hasPage
+            />
+          </div>
         </div>
 
-        {/* Headline */}
-        <div className="relative z-10 text-center max-w-3xl mx-auto mb-6">
-          <h1 className="text-[56px] sm:text-[72px] lg:text-[88px] font-black text-neutral-950 leading-[0.95] tracking-[-0.04em]" style={{ fontFamily: "'Shippori Mincho', serif" }}>
-            散らばった<br />
-            知識が、<br />
-            <span style={{ WebkitTextStroke: '2px #0a0a0a', color: 'transparent' }}>
-              つながる。
-            </span>
+        {/* ── Giant headline — overlaps cards intentionally ── */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none select-none px-4">
+          <h1
+            className="font-black text-center leading-[0.83] tracking-[-0.05em]"
+            style={{
+              fontFamily: "'Shippori Mincho', serif",
+              fontSize: 'clamp(40px, 6vw, 72px)',
+            }}
+          >
+            <span className="block text-neutral-950">誰かが</span>
+            <span className="block" style={{ WebkitTextStroke: '1.5px #111', color: 'transparent', opacity: 0.85 }}>去っても、</span>
+            <span className="block text-neutral-950">知識は残る。</span>
           </h1>
         </div>
 
-        <p className="relative z-10 text-neutral-500 text-base sm:text-lg max-w-md text-center leading-relaxed mb-10">
-          Notion・Slack・Figmaに眠るナレッジを集約。グラフで関係性を掴み、AIが即座に答える。
-        </p>
-
-        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 mb-20">
-          <a href={APP_URL}
-            className="flex items-center gap-2.5 bg-neutral-700 hover:bg-neutral-600 text-white font-semibold text-sm px-6 py-3.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-neutral-700/20">
+        {/* ── Bottom CTA band ── */}
+        <div className="absolute bottom-0 inset-x-0 z-20 pb-10 pt-6 flex flex-col items-center gap-3"
+          style={{ background: 'linear-gradient(to top, #EEEAE4 55%, transparent)' }}>
+          <p className="text-sm text-neutral-600 text-center max-w-xs leading-relaxed px-4"
+            style={{ fontFamily: "'Shippori Mincho', serif" }}>
+            チームの思考・意思決定・文脈を一つのキャンバスに。<br />Goodpatch専用ナレッジハブ。
+          </p>
+          <a
+            href={APP_URL}
+            className="flex items-center gap-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-sm px-7 py-3.5 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-neutral-900/30"
+          >
             <GoogleIcon />
             Googleアカウントで使い始める
           </a>
-          <span className="text-xs text-neutral-400">@goodpatch.com アカウントが必要です</span>
+          <p className="text-xs text-neutral-500">@goodpatch.com アカウントが必要です</p>
         </div>
 
-        {/* Floating composition */}
-        <div className="relative z-10 w-full max-w-3xl mx-auto" style={{ height: 400 }}>
-
-          {/* Center: canvas mockup */}
-          <div className="absolute inset-x-[10%] inset-y-0 rounded-2xl bg-neutral-600 border border-neutral-500 overflow-hidden shadow-2xl shadow-neutral-600/30">
-            {/* Browser bar */}
-            <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-white/10">
-              <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
-              <div className="ml-3 h-4 w-32 rounded bg-white/10" />
-            </div>
-            {/* Canvas */}
-            <div className="relative h-full bg-stone-600 overflow-hidden">
-              <div className="absolute inset-0 opacity-[0.025]"
-                style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-              {[
-                { x: '8%', y: '10%', w: '26%', h: '40%', label: 'デザイン / UX', c: '#8b5cf6' },
-                { x: '37%', y: '6%', w: '26%', h: '35%', label: 'フロントエンド', c: '#3b82f6' },
-                { x: '67%', y: '10%', w: '26%', h: '40%', label: 'AI', c: '#f59e0b' },
-                { x: '20%', y: '54%', w: '58%', h: '36%', label: 'バックエンド', c: '#10b981' },
-              ].map((z, i) => (
-                <div key={i} className="absolute rounded-xl border"
-                  style={{ left: z.x, top: z.y, width: z.w, height: z.h, borderColor: `${z.c}25`, backgroundColor: `${z.c}08` }}>
-                  <span className="absolute top-2 left-2.5 text-[8px] font-semibold" style={{ color: `${z.c}70` }}>{z.label}</span>
-                </div>
-              ))}
-              {[
-                { x: '10%', y: '26%', title: 'デザインシステム', c: '#8b5cf6' },
-                { x: '39%', y: '16%', title: 'Next.js 移行計画', c: '#3b82f6' },
-                { x: '69%', y: '22%', title: 'AI ロードマップ', c: '#f59e0b' },
-                { x: '24%', y: '63%', title: 'API設計', c: '#10b981' },
-                { x: '50%', y: '66%', title: 'DBスキーマ', c: '#10b981' },
-              ].map((c, i) => (
-                <div key={i} className="absolute rounded-lg px-2 py-1.5 text-[7px] font-semibold border"
-                  style={{ left: c.x, top: c.y, borderColor: `${c.c}50`, backgroundColor: `${c.c}18`, color: `${c.c}dd`, minWidth: 72 }}>
-                  {c.title}
-                </div>
-              ))}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                <line x1="16%" y1="32%" x2="43%" y2="22%" stroke="#ffffff08" strokeWidth="1" />
-                <line x1="50%" y1="22%" x2="73%" y2="29%" stroke="#ffffff08" strokeWidth="1" />
-                <line x1="43%" y1="24%" x2="32%" y2="66%" stroke="#ffffff08" strokeWidth="1" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Float: cluster badge — top left */}
-          <Float style={{ top: 16, left: 0, padding: '10px 14px', transform: 'rotate(-3deg)' }}>
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-1.5">
-                {['#8b5cf6','#3b82f6','#f59e0b','#10b981'].map((c,i) => (
-                  <div key={i} className="w-5 h-5 rounded-full border-2 border-white" style={{ backgroundColor: c }} />
-                ))}
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-neutral-900 leading-none">4 クラスター</p>
-                <p className="text-[9px] text-neutral-400 mt-0.5">整理済み</p>
-              </div>
-            </div>
-          </Float>
-
-          {/* Float: AI response — top right */}
-          <Float style={{ top: 8, right: 0, padding: '12px 14px', transform: 'rotate(2deg)', minWidth: 160 }}>
-            <p className="text-[9px] font-semibold text-neutral-400 mb-1.5">AI の回答</p>
-            <p className="text-[10px] text-neutral-700 leading-relaxed">デザインシステムは<br />2023年Q3に導入。<br />開発速度が40%向上。</p>
-            <div className="flex gap-0.5 mt-2">
-              {[0,1,2].map(i => <div key={i} className="w-1 h-1 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: `${i*120}ms` }} />)}
-            </div>
-          </Float>
-
-          {/* Float: stats — bottom left */}
-          <Float style={{ bottom: 24, left: -8, padding: '10px 16px', background: '#fef9c3', borderColor: '#fde68a', transform: 'rotate(1.5deg)' }}>
-            <p className="text-2xl font-black text-neutral-900 leading-none">24</p>
-            <p className="text-[10px] text-neutral-500 mt-0.5 font-medium">ナレッジカード</p>
-          </Float>
-
-          {/* Float: activity — bottom right */}
-          <Float style={{ bottom: 32, right: -4, padding: '10px 14px', transform: 'rotate(-2deg)', minWidth: 148 }}>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-[8px] font-bold text-violet-600 shrink-0">H</div>
-              <div>
-                <p className="text-[9px] font-semibold text-neutral-800">hiroki さんが追加</p>
-                <p className="text-[9px] text-neutral-400">AIロードマップ · 今</p>
-              </div>
-            </div>
-          </Float>
-        </div>
       </section>
 
-      {/* ── Divider ──────────────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="h-px bg-neutral-200" />
-      </div>
+      {/* ════════════════════════════════════════════════════════════════════
+          ACT 1 — RECOGNITION
+          「あなたのチームで、今日も起きていること」
+          ユーザーが自分ごととして感じる具体的なシーン3つ
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden" style={{ backgroundColor: '#18140F' }}>
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 -rotate-90 origin-center z-10 hidden sm:block">
+          <span className="text-[9px] font-black tracking-[0.3em] text-[#3A3530] uppercase">Act 01</span>
+        </div>
 
-      {/* ── Problem ──────────────────────────────────────────────────────── */}
-      <section className="py-32 px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="px-10 sm:px-20 py-20">
           <Reveal>
-            <p className="text-xs font-bold tracking-[0.15em] text-neutral-400 uppercase mb-5">Problem</p>
-            <h2 className="text-[42px] sm:text-[56px] font-black text-neutral-950 leading-[1.0] tracking-[-0.03em] mb-16 max-w-xl" style={{ fontFamily: "'Shippori Mincho', serif" }}>
-              チームの知識、<br />
-              ちゃんと<br />
-              活きていますか？
+            <p className="text-[11px] font-black tracking-[0.2em] text-[#5C5750] uppercase mb-6">Recognition</p>
+            <h2 className="font-black leading-[0.9] tracking-[-0.04em] mb-16 max-w-2xl"
+              style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(24px, 3vw, 40px)', color: 'white' }}>
+              あなたのチームで、<br />
+              <span style={{ WebkitTextStroke: '1.5px #fff', color: 'transparent' }}>今日も起きていること。</span>
             </h2>
           </Reveal>
-          <div className="grid sm:grid-cols-3 gap-px bg-neutral-200 rounded-2xl overflow-hidden">
+
+          <div className="space-y-0">
             {[
-              { icon: '🔍', num: '01', title: '情報が点在している', body: 'Notion・Slack・Figmaに分散していて、探すだけで30分消える。' },
-              { icon: '👋', num: '02', title: '退職で知識が消える', body: '誰かが抜けると、その人の持つ暗黙知・文脈がすべて失われる。' },
-              { icon: '❓', num: '03', title: '意思決定の背景がない', body: '「なぜこうなったか」が残っていなくて、同じ議論を何度も繰り返す。' },
+              {
+                num: '01',
+                scene: '「なぜこの設計にしたか、誰かわかる人いる？」',
+                body: '担当者が退職してから半年。理由も、文脈も、その人と一緒に去っていた。',
+                tag: 'KNOWLEDGE LOSS',
+              },
+              {
+                num: '02',
+                scene: '「Slackのどこかにあった気がして」',
+                body: '150件遡って、結局見つけられなかった。あの議論は、本当にあったのか。',
+                tag: 'FINDABILITY',
+              },
+              {
+                num: '03',
+                scene: '「そのリサーチ、先週別チームもやってた」',
+                body: '誰も知らなかった。ツールは揃っていた。ただ、繋がっていなかっただけ。',
+                tag: 'DUPLICATION',
+              },
             ].map((p, i) => (
-              <Reveal key={i} delay={i * 100} className="bg-white p-8 hover:bg-neutral-50 transition-colors">
-                <p className="text-3xl mb-6">{p.icon}</p>
-                <p className="text-[10px] font-bold tracking-widest text-neutral-300 mb-3">{p.num}</p>
-                <h3 className="text-base font-black text-neutral-900 mb-3">{p.title}</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed">{p.body}</p>
+              <Reveal key={i} delay={i * 100}>
+                <div className="border-t border-[#2A2520] py-10 grid sm:grid-cols-[auto_1fr] gap-6 sm:gap-12 group">
+                  <span className="text-[10px] font-black tracking-[0.15em] text-[#3A3530] mt-1 hidden sm:block">{p.num}</span>
+                  <div>
+                    <p className="font-black text-white mb-3 leading-snug tracking-tight"
+                      style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(14px, 1.4vw, 18px)' }}>
+                      {p.scene}
+                    </p>
+                    <p className="text-[#5C5750] text-[14px] leading-relaxed">{p.body}</p>
+                  </div>
+                  <span className="text-[8px] font-black tracking-[0.2em] text-[#2A2520] hidden lg:block self-start mt-1">{p.tag}</span>
+                </div>
               </Reveal>
             ))}
+            <div className="border-t border-[#2A2520]" />
           </div>
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────────────────── */}
-      <section className="py-8 px-6">
-        <div className="max-w-5xl mx-auto space-y-4">
+      {/* ════════════════════════════════════════════════════════════════════
+          ACT 2 — ROOT CAUSE
+          「ツールの問題じゃない」
+          本質的な課題への洞察。共感から納得へ。
+      ════════════════════════════════════════════════════════════════════ */}
+      <section style={{ backgroundColor: '#F4F0EB' }} className="overflow-hidden">
+        <div className="max-w-5xl mx-auto px-10 sm:px-16 py-28">
           <Reveal>
-            <p className="text-xs font-bold tracking-[0.15em] text-neutral-400 uppercase mb-5">Features</p>
+            <p className="text-[11px] font-black tracking-[0.2em] text-neutral-400 uppercase mb-8">Act 02 — Root Cause</p>
           </Reveal>
-
-          {/* Feature 01 */}
-          <Reveal>
-            <div className="group rounded-3xl bg-neutral-700 overflow-hidden grid sm:grid-cols-2 min-h-[360px]">
-              <div className="p-10 flex flex-col justify-between">
-                <div>
-                  <p className="text-[10px] font-bold tracking-widest text-neutral-500 mb-4">01 — VISUALIZE</p>
-                  <h3 className="text-3xl font-black text-white leading-tight tracking-tight mb-4" style={{ fontFamily: "'Shippori Mincho', serif" }}>カンバス<br />＆グラフ</h3>
-                  <p className="text-neutral-400 text-sm leading-relaxed">知識の全体像を俯瞰。カードを置いて関係性を線でつなぐと、チームの思考が地図になる。</p>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-6">
-                  {['ドラッグ移動', 'ズーム', 'クラスター', 'バンドル'].map(t => (
-                    <span key={t} className="text-[10px] font-medium text-neutral-500 border border-neutral-700 rounded-full px-3 py-1">{t}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="relative overflow-hidden bg-stone-500 flex items-center justify-center p-6">
-                <div className="absolute inset-0 opacity-[0.03]"
-                  style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                <svg width="280" height="200" viewBox="0 0 280 200" className="relative z-10">
-                  {[
-                    [20, 30], [140, 20], [240, 40], [60, 120], [170, 130],
-                  ].map(([x,y], i) => {
-                    const colors = ['#8b5cf6','#3b82f6','#f59e0b','#10b981','#3b82f6']
-                    const labels = ['デザインシステム','Next.js','TypeScript','Figma','AI設計']
-                    return (
-                      <g key={i}>
-                        <rect x={x} y={y} width={100} height={28} rx={8} fill={`${colors[i]}20`} stroke={colors[i]} strokeWidth="1.5" />
-                        <text x={x+10} y={y+18} fontSize="8" fill={colors[i]} fontWeight="700">{labels[i]}</text>
-                      </g>
-                    )
-                  })}
-                  <line x1="70" y1="44" x2="145" y2="34" stroke="#ffffff18" strokeWidth="1.5" />
-                  <line x1="190" y1="34" x2="245" y2="54" stroke="#ffffff18" strokeWidth="1.5" />
-                  <line x1="155" y1="48" x2="95" y2="134" stroke="#ffffff18" strokeWidth="1.5" />
-                  <line x1="190" y1="48" x2="200" y2="144" stroke="#ffffff18" strokeWidth="1.5" />
-                </svg>
-              </div>
+          <Reveal delay={80}>
+            <h2 className="font-black text-neutral-950 leading-[0.9] tracking-[-0.04em] mb-10"
+              style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(26px, 3.5vw, 48px)' }}>
+              ツールの<br />
+              問題じゃない。
+            </h2>
+          </Reveal>
+          <Reveal delay={160}>
+            <div className="grid sm:grid-cols-2 gap-12 items-start">
+              <p className="text-neutral-500 text-base leading-[1.9]">
+                NotionもSlackもFigmaも、それぞれ機能している。<br />
+                問題は、それらを<strong className="text-neutral-700 font-black">繋ぐ場所がない</strong>こと。
+              </p>
+              <p className="text-neutral-500 text-base leading-[1.9]">
+                チームの知識は点在したまま、誰かの記憶に依存して、ある日静かに消えていく。
+                それは怠慢ではなく、<strong className="text-neutral-700 font-black">構造的な問題</strong>だ。
+              </p>
             </div>
           </Reveal>
+          {/* Accent divider */}
+          <Reveal delay={200}>
+            <div className="mt-16 pt-16 border-t border-neutral-200 flex items-center gap-4">
+              <div className="flex gap-2">
+                {['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'].map((c, i) => (
+                  <div key={i} className="w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
+                ))}
+              </div>
+              <p className="text-neutral-400 text-sm">
+                Notion / Slack / Figma — それぞれ機能しているが、統合されていない
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
 
-          {/* Feature 02 + 03 */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Reveal delay={80}>
-              <div className="rounded-3xl border border-neutral-200 bg-white overflow-hidden h-full">
-                <div className="p-8">
-                  <p className="text-[10px] font-bold tracking-widest text-neutral-400 mb-4">02 — ORGANIZE</p>
-                  <h3 className="text-2xl font-black text-neutral-950 leading-tight tracking-tight mb-3" style={{ fontFamily: "'Shippori Mincho', serif" }}>クラスター<br />＆バンドル</h3>
-                  <p className="text-neutral-500 text-sm leading-relaxed">カテゴリ別に束ねて整理。散らかってきたら一発でまとめられる。</p>
+      {/* ════════════════════════════════════════════════════════════════════
+          ACT 3 — VISION
+          「本来、こうあるべきだ」
+          読者が「そうなりたい」と感じる変容後の世界像
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden" style={{ backgroundColor: '#18140F' }}>
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 -rotate-90 origin-center z-10 hidden sm:block">
+          <span className="text-[9px] font-black tracking-[0.3em] text-[#3A3530] uppercase">Act 03</span>
+        </div>
+
+        <div className="px-10 sm:px-20 py-20">
+          <Reveal>
+            <p className="text-[11px] font-black tracking-[0.2em] text-[#5C5750] uppercase mb-6">Vision</p>
+            <h2 className="font-black leading-[0.9] tracking-[-0.04em] mb-16 max-w-xl"
+              style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(24px, 3vw, 40px)', color: 'white' }}>
+              本来、<br />
+              <span style={{ WebkitTextStroke: '1.5px #fff', color: 'transparent' }}>こうあるべきだ。</span>
+            </h2>
+          </Reveal>
+
+          <div className="space-y-0">
+            {[
+              {
+                num: '—',
+                vision: '入社3日目に、過去5年の意思決定の文脈を自分で読み解ける。',
+                note: '退職者の知識も、組織の資産として残り続ける。',
+              },
+              {
+                num: '—',
+                vision: '「なぜこの設計にしたか」が、AIに聞けば3秒でわかる。',
+                note: '記録された知識が、インタラクティブに問い返せる。',
+              },
+              {
+                num: '—',
+                vision: '同じリサーチを、二度やらなくてよくなる。',
+                note: 'チームの集合知が可視化され、次の思考の起点になる。',
+              },
+            ].map((v, i) => (
+              <Reveal key={i} delay={i * 100}>
+                <div className="border-t border-[#2A2520] py-10">
+                  <p className="font-black text-white leading-tight tracking-tight mb-3"
+                    style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(14px, 1.4vw, 18px)' }}>
+                    {v.vision}
+                  </p>
+                  <p className="text-[#4A4540] text-[13px] leading-relaxed">{v.note}</p>
                 </div>
-                <div className="px-8 pb-8 flex gap-3 justify-center">
-                  {[
-                    { label: 'デザイン', c: '#8b5cf6' },
-                    { label: 'フロント', c: '#3b82f6' },
-                    { label: 'AI', c: '#f59e0b' },
-                    { label: 'バック', c: '#10b981' },
-                  ].map((b, i) => (
-                    <div key={i} className="relative w-16 h-20">
-                      {[2,1,0].map(j => (
-                        <div key={j}
-                          className="absolute inset-0 rounded-xl border-2"
-                          style={{
-                            borderColor: b.c,
-                            backgroundColor: j === 0 ? b.c : `${b.c}15`,
-                            transform: `rotate(${(j-1)*5}deg) translateY(${j*2}px)`,
-                            zIndex: 3 - j,
-                          }}>
-                          {j === 0 && <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white text-center px-1 leading-tight">{b.label}</span>}
-                        </div>
-                      ))}
+              </Reveal>
+            ))}
+            <div className="border-t border-[#2A2520]" />
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          ACT 4 — SOLUTION
+          「Vaultはどう変えるか」
+          ビジョンを実現する具体的な機能
+      ════════════════════════════════════════════════════════════════════ */}
+
+      {/* 01 — Canvas: real VaultCards on canvas bg */}
+      <Reveal>
+        <section className="grid lg:grid-cols-[5fr_7fr] overflow-hidden" style={{ minHeight: 540 }}>
+          <div className="flex flex-col justify-center p-10 lg:p-16" style={{ backgroundColor: '#23201A' }}>
+            <p className="text-[10px] font-black tracking-[0.2em] text-[#5C5750] uppercase mb-2">Act 04 — Solution</p>
+            <p className="text-[10px] font-black tracking-[0.15em] text-[#4A4540] uppercase mb-6">01 / Canvas &amp; Graph</p>
+            <h3 className="font-black text-white leading-[0.88] tracking-[-0.04em] mb-5"
+              style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(22px, 2.8vw, 36px)' }}>
+              知識に、<br />居場所を<br />つくる。
+            </h3>
+            <p className="text-[#6B6560] text-sm leading-relaxed mb-8 max-w-[280px]">
+              カードをキャンバスに置き、関係性を線でつなぐ。思考の全体像が一枚の地図になる。退職者の知識も、ここに残り続ける。
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {['ドラッグ移動', 'ズーム', 'グラフ', 'バンドル'].map(t => (
+                <span key={t} className="text-[10px] font-medium text-[#5C5750] border border-[#3A3630] rounded-full px-3 py-1">{t}</span>
+              ))}
+            </div>
+          </div>
+          <div className="relative overflow-hidden" style={{ minHeight: 480, backgroundColor: '#EEEAE4' }}>
+            <div className="absolute inset-0"
+              style={{ backgroundImage: 'radial-gradient(circle, #b8b3ab 1px, transparent 1px)', backgroundSize: '28px 28px', opacity: 0.55 }} />
+            <div className="absolute inset-0 pointer-events-none select-none">
+              <div style={{ position: 'absolute', top: 28, left: 12, transform: 'rotate(-8deg) scale(0.68)', transformOrigin: 'top left' }}>
+                <VaultCard cluster="design" title="デザインシステム移行計画" summary="Figmaオートレイアウト全適用。トークン命名規則を統一する。" assignees={[{ name: 'H', color: '#8b5cf6' }, { name: 'Y', color: '#ec4899' }]} date="Mar 15" hasPage />
+              </div>
+              <div style={{ position: 'absolute', top: 18, left: '38%', transform: 'rotate(5deg) scale(0.68)', transformOrigin: 'top left' }}>
+                <VaultCard cluster="frontend" title="Next.js 15 App Router 移行" summary="段階移行で初期ロード1.8s→0.6sに改善。" assignees={[{ name: 'T', color: '#3b82f6' }]} date="Mar 13" />
+              </div>
+              <div style={{ position: 'absolute', top: 24, right: 8, transform: 'rotate(10deg) scale(0.68)', transformOrigin: 'top right' }}>
+                <VaultCard cluster="ai" title="GPT-4o 実験メモ" summary="1200件データ検証。精度23%向上。" assignees={[{ name: 'K', color: '#f59e0b' }]} date="Mar 12" />
+              </div>
+              <div style={{ position: 'absolute', top: '42%', left: 24, transform: 'rotate(4deg) scale(0.68)', transformOrigin: 'top left' }}>
+                <VaultCard cluster="backend" title="Supabase RLS 設計" summary="Row Level Securityで組織単位のデータ分離を実装。" assignees={[{ name: 'M', color: '#10b981' }]} date="Mar 8" />
+              </div>
+              <div style={{ position: 'absolute', bottom: 48, left: '28%', transform: 'rotate(-5deg) scale(0.68)', transformOrigin: 'top left' }}>
+                <VaultCard cluster="design" title="ユーザーインタビュー 総括" summary="12インサイト抽出。情報過多が最大ペイン。" assignees={[{ name: 'Y', color: '#ec4899' }]} date="Mar 6" hasPage />
+              </div>
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* 02 — Organize + 03 — AI Chat */}
+      <div className="grid sm:grid-cols-2">
+        <Reveal>
+          <div className="p-10 lg:p-14 flex flex-col" style={{ minHeight: 520, backgroundColor: '#F4F0EB' }}>
+            <p className="text-[10px] font-black tracking-[0.15em] text-neutral-400 uppercase mb-6">02 / Organize</p>
+            <h3 className="font-black text-neutral-950 leading-[0.9] tracking-[-0.04em] mb-4"
+              style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(20px, 2.5vw, 30px)' }}>
+              混沌を、<br />秩序にする。
+            </h3>
+            <p className="text-neutral-500 text-sm leading-relaxed mb-auto max-w-xs">
+              クラスター別に分類し、バンドルで束ねる。どんなに増えても、誰でも探せる状態を保つ。
+            </p>
+            <div className="flex gap-5 justify-center pt-10">
+              {[
+                { label: 'Design', c: '#8b5cf6' },
+                { label: 'Front',  c: '#3b82f6' },
+                { label: 'AI',     c: '#f59e0b' },
+                { label: 'Back',   c: '#10b981' },
+              ].map((b, i) => (
+                <div key={i} className="relative" style={{ width: 68, height: 90 }}>
+                  {[3, 2, 1, 0].map(j => (
+                    <div key={j} className="absolute inset-0 rounded-2xl"
+                      style={{
+                        border: `2px solid ${b.c}`,
+                        backgroundColor: j === 0 ? b.c : `${b.c}${['', '10', '20', '38'][j]}`,
+                        transform: `rotate(${(j - 1.5) * 7}deg) translateY(${j * 2}px)`,
+                        zIndex: 4 - j,
+                      }}>
+                      {j === 0 && <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white text-center px-1 leading-tight">{b.label}</span>}
                     </div>
                   ))}
                 </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={160}>
-              <div className="rounded-3xl border border-neutral-200 bg-white overflow-hidden h-full">
-                <div className="p-8">
-                  <p className="text-[10px] font-bold tracking-widest text-neutral-400 mb-4">03 — AI</p>
-                  <h3 className="text-2xl font-black text-neutral-950 leading-tight tracking-tight mb-3" style={{ fontFamily: "'Shippori Mincho', serif" }}>AIチャット<br />＆サマリー</h3>
-                  <p className="text-neutral-500 text-sm leading-relaxed">蓄積したナレッジをAIが要約・回答。「あの話どこだっけ」が0秒で解決。</p>
-                </div>
-                <div className="px-8 pb-8 space-y-2">
-                  <div className="ml-auto bg-neutral-600 text-white text-[11px] rounded-2xl rounded-tr-sm px-3.5 py-2.5 w-fit max-w-[85%]">
-                    デザインシステムの導入経緯は？
-                  </div>
-                  <div className="bg-neutral-100 text-neutral-700 text-[11px] rounded-2xl rounded-tl-sm px-3.5 py-2.5 w-fit max-w-[90%] leading-relaxed">
-                    2023年Q3に統一性の課題から導入。<br />開発速度が約40%向上しました。
-                  </div>
-                  <div className="flex items-center gap-1 pl-1 pt-0.5">
-                    {[0,1,2].map(i => <div key={i} className="w-1 h-1 rounded-full bg-neutral-300 animate-bounce" style={{ animationDelay: `${i*150}ms` }} />)}
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── How to start ─────────────────────────────────────────────────── */}
-      <section className="py-32 px-6">
-        <div className="max-w-5xl mx-auto grid sm:grid-cols-2 gap-16 items-center">
-          <Reveal>
-            <p className="text-xs font-bold tracking-[0.15em] text-neutral-400 uppercase mb-5">How to start</p>
-            <h2 className="text-[42px] sm:text-[52px] font-black text-neutral-950 leading-[1.0] tracking-[-0.03em] mb-10" style={{ fontFamily: "'Shippori Mincho', serif" }}>
-              3ステップで、<br />今日から。
-            </h2>
-            <div className="space-y-8">
-              {[
-                { n: '01', title: 'Googleアカウントでログイン', body: '設定不要。@goodpatch.com アカウントでそのままスタート。' },
-                { n: '02', title: 'カードを作ってナレッジを追加', body: 'タイトルと内容を入力するだけ。Markdownにも対応。' },
-                { n: '03', title: 'チームで共有・活用', body: 'リアルタイムで同期。メンバー全員の知識にアクセスできる。' },
-              ].map((s, i) => (
-                <div key={i} className="flex gap-5">
-                  <span className="text-[11px] font-black text-neutral-300 mt-0.5 shrink-0 w-6">{s.n}</span>
-                  <div>
-                    <p className="font-black text-neutral-900 mb-1">{s.title}</p>
-                    <p className="text-sm text-neutral-500 leading-relaxed">{s.body}</p>
-                  </div>
-                </div>
               ))}
             </div>
-          </Reveal>
-          <Reveal delay={150}>
-            <div className="rounded-3xl bg-neutral-700 p-6 shadow-2xl shadow-neutral-700/20">
-              <div className="flex items-center gap-2 pb-4 border-b border-white/10 mb-4">
-                <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center">
-                  <span className="text-white text-[9px] font-black">V</span>
+          </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <div className="p-10 lg:p-14 flex flex-col" style={{ minHeight: 520, backgroundColor: '#18140F' }}>
+            <p className="text-[10px] font-black tracking-[0.15em] text-[#5C5750] uppercase mb-6">03 / AI Chat</p>
+            <h3 className="font-black text-white leading-[0.9] tracking-[-0.04em] mb-4"
+              style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(20px, 2.5vw, 30px)' }}>
+              問えば、<br />3秒で答える。
+            </h3>
+            <p className="text-[#6B6560] text-sm leading-relaxed mb-auto max-w-xs">
+              「なぜこの設計にしたか」「あの議論の結論は何だったか」——蓄積したナレッジをAIが即座に回答する。
+            </p>
+            <div className="space-y-3 pt-10">
+              <div className="flex justify-end">
+                <div className="bg-[#2C2822] border border-[#3A3630] text-neutral-300 text-[13px] rounded-2xl rounded-tr-sm px-4 py-3 max-w-[88%] leading-relaxed">
+                  デザインシステムはなぜ導入したの？
                 </div>
-                <span className="text-white/40 text-xs">Vault</span>
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </div>
-              <div className="space-y-2">
-                {[
-                  { label: 'デザインシステムの概要', c: '#8b5cf6', time: '2時間前' },
-                  { label: 'Q3 ロードマップ', c: '#3b82f6', time: '昨日' },
-                  { label: 'オンボーディングガイド', c: '#f59e0b', time: '3日前' },
-                  { label: 'ブランドガイドライン', c: '#10b981', time: '1週間前' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/8 transition-colors px-3 py-2.5 cursor-default">
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.c }} />
-                    <span className="text-white/70 text-xs flex-1">{item.label}</span>
-                    <span className="text-white/25 text-[10px]">{item.time}</span>
-                  </div>
+              <div className="flex justify-start">
+                <div className="bg-[#8b5cf6]/12 border border-[#8b5cf6]/20 text-neutral-300 text-[13px] rounded-2xl rounded-tl-sm px-4 py-3 max-w-[92%] leading-relaxed">
+                  <span className="block text-[10px] font-black text-[#8b5cf6] mb-1.5 tracking-wide">Vault AI</span>
+                  2023年Q3、コンポーネント乱立と認識ズレが課題に。導入後、開発速度が約40%向上しました。
+                </div>
+              </div>
+              <div className="flex items-center gap-1 pl-1 pt-0.5">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6] animate-bounce" style={{ animationDelay: `${i * 160}ms`, opacity: 0.45 }} />
                 ))}
               </div>
-              <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-violet-500/30 flex items-center justify-center text-[8px] font-bold text-violet-300">H</div>
-                <span className="text-white/30 text-[10px]">hiroki@goodpatch.com が更新</span>
-              </div>
             </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── CTA ──────────────────────────────────────────────────────────── */}
-      <section className="py-8 px-6 pb-24">
-        <div className="max-w-5xl mx-auto">
-          <Reveal>
-            <div className="rounded-3xl bg-neutral-700 px-10 py-16 text-center relative overflow-hidden">
-              <div className="absolute inset-0 pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(ellipse at 50% 0%, #7c3aed20 0%, transparent 60%)' }} />
-              <div className="relative z-10">
-                <p className="text-xs font-bold tracking-[0.15em] text-neutral-500 uppercase mb-6">Get Started</p>
-                <h2 className="text-[42px] sm:text-[60px] font-black text-white leading-[1.0] tracking-[-0.03em] mb-4" style={{ fontFamily: "'Shippori Mincho', serif" }}>
-                  Goodpatchのナレッジを、<br />
-                  <span style={{ WebkitTextStroke: '1.5px #ffffff', color: 'transparent' }}>Vaultに。</span>
-                </h2>
-                <p className="text-neutral-500 mb-10 text-base max-w-sm mx-auto">
-                  今日から始めれば、チームの知識は明日から資産になる。
-                </p>
-                <a href={APP_URL}
-                  className="inline-flex items-center gap-2.5 bg-white hover:bg-neutral-100 text-neutral-950 font-black text-sm px-8 py-4 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl">
-                  <GoogleIcon />
-                  今すぐ無料で使い始める
-                </a>
-                <p className="text-neutral-600 text-xs mt-4">@goodpatch.com アカウントが必要です</p>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="py-8 px-6 border-t border-neutral-100">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
-              <span className="text-white text-[8px] font-black">V</span>
-            </div>
-            <span className="text-xs text-neutral-400 font-medium">Vault — Goodpatch internal</span>
           </div>
-          <p className="text-xs text-neutral-300">© 2026 Goodpatch Inc.</p>
+        </Reveal>
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          ACT 5 — ACTION
+          「3ステップで、今日から始まる」
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="overflow-hidden" style={{ backgroundColor: '#F4F0EB' }}>
+        <div className="max-w-6xl mx-auto px-8 py-16">
+          <Reveal>
+            <div className="flex items-center gap-4 mb-2">
+              <p className="text-[10px] font-black tracking-[0.2em] text-neutral-400 uppercase shrink-0">Act 05 — How to Start</p>
+              <div className="h-px flex-1 bg-neutral-200" />
+            </div>
+          </Reveal>
+
+          {[
+            {
+              n: '01', align: 'left',
+              title: 'Google\nログイン',
+              body: '設定不要。@goodpatch.com アカウントがあればそのまま。チームのナレッジに、今日からアクセスできる。',
+            },
+            {
+              n: '02', align: 'right',
+              title: 'カードを\n作る',
+              body: 'タイトルと内容を書くだけ。クラスターを選んでキャンバスに置く。その瞬間から、知識は組織の財産になる。',
+            },
+            {
+              n: '03', align: 'left',
+              title: 'チームで\n問い続ける',
+              body: 'カンバスで俯瞰し、AIに問いを立てる。チームの集合知が、次の意思決定を支える。',
+            },
+          ].map((s, i) => (
+            <Reveal key={i} delay={i * 80}>
+              <div className={`relative border-b border-neutral-200 py-6 flex items-center gap-4 sm:gap-8 ${s.align === 'right' ? 'flex-row-reverse' : ''}`}>
+                <span
+                  className="font-black text-neutral-200 leading-none tracking-tighter shrink-0 select-none"
+                  style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(56px, 10vw, 110px)', lineHeight: 0.85 }}
+                  aria-hidden
+                >{s.n}</span>
+                <div className={`max-w-sm ${s.align === 'right' ? 'text-right' : ''}`}>
+                  <h3 className="font-black text-neutral-950 leading-[0.88] tracking-[-0.03em] mb-3"
+                    style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(18px, 2vw, 26px)', whiteSpace: 'pre-line' }}>{s.title}</h3>
+                  <p className="text-neutral-500 text-sm leading-relaxed">{s.body}</p>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          CLOSE — CTA
+          「ここから、チームの記憶が始まる」
+          感情的なクロージング
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden" style={{ backgroundColor: '#18140F', minHeight: '72vh' }}>
+        <div className="absolute inset-0 pointer-events-none select-none">
+          <div style={{ position: 'absolute', top: '8%',    left: '-4%',  transform: 'rotate(-9deg)',  opacity: 0.07 }}>
+            <VaultCard cluster="design"   title="デザインシステム"  summary="" />
+          </div>
+          <div style={{ position: 'absolute', top: '4%',    left: '28%',  transform: 'rotate(7deg)',   opacity: 0.07 }}>
+            <VaultCard cluster="frontend" title="Next.js 移行計画" summary="" />
+          </div>
+          <div style={{ position: 'absolute', top: '12%',   right: '-3%', transform: 'rotate(-12deg)', opacity: 0.07 }}>
+            <VaultCard cluster="ai"       title="AI ロードマップ"  summary="" />
+          </div>
+          <div style={{ position: 'absolute', bottom: '14%', left: '4%',  transform: 'rotate(5deg)',  opacity: 0.07 }}>
+            <VaultCard cluster="backend"  title="Supabase 設計"   summary="" />
+          </div>
+          <div style={{ position: 'absolute', bottom: '8%',  right: '6%', transform: 'rotate(-7deg)', opacity: 0.07 }}>
+            <VaultCard cluster="design"   title="インタビュー総括" summary="" />
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-6xl mx-auto px-8 py-28 flex flex-col items-start justify-center" style={{ minHeight: '72vh' }}>
+          <p className="text-[10px] font-black tracking-[0.25em] text-[#4A4540] uppercase mb-8">Close</p>
+          <h2 className="font-black text-white leading-[0.85] tracking-[-0.05em] mb-6"
+            style={{ fontFamily: "'Shippori Mincho', serif", fontSize: 'clamp(30px, 4.5vw, 60px)' }}>
+            ここから、<br />
+            チームの<br />
+            <span style={{ WebkitTextStroke: '2px white', color: 'transparent' }}>記憶が始まる。</span>
+          </h2>
+          <p className="text-[#5C5750] text-base leading-[1.9] mb-12 max-w-md">
+            今日記録した一枚のカードが、1年後に誰かの思考を助ける。<br />
+            Goodpatchの知識を、Vaultに集めよう。
+          </p>
+          <a href={APP_URL}
+            className="inline-flex items-center gap-3 bg-white hover:bg-neutral-100 text-neutral-950 font-black text-sm px-8 py-4 rounded-full transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl">
+            <GoogleIcon />
+            Googleアカウントで使い始める
+          </a>
+          <p className="text-[#3A3530] text-xs mt-4">@goodpatch.com アカウントが必要です</p>
+        </div>
+      </section>
+
+      {/* ── Footer ── wordmark ────────────────────────────────────────────── */}
+      <footer className="overflow-hidden" style={{ backgroundColor: '#18140F', borderTop: '1px solid #2A2520' }}>
+        <div className="overflow-hidden" style={{ lineHeight: 0.8 }}>
+          <p className="font-black tracking-tighter select-none px-5 pt-5"
+            style={{
+              fontFamily: "'Shippori Mincho', serif",
+              fontSize: 'clamp(56px, 12vw, 140px)',
+              WebkitTextStroke: '1px #2A2520',
+              color: 'transparent',
+              lineHeight: 0.85,
+            }}>
+            Vault
+          </p>
+        </div>
+        <div className="max-w-6xl mx-auto px-6 pb-8 pt-2 flex items-center justify-between">
+          <span className="text-[11px] text-[#4A4540] font-medium">Goodpatch internal knowledge hub</span>
+          <p className="text-[11px] text-[#3A3530]">© 2026 Goodpatch Inc.</p>
         </div>
       </footer>
 
