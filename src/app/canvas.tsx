@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
-import { Plus, ZoomIn, ZoomOut, Maximize2, Search, X, ExternalLink, Sparkles, CalendarDays, Network, LayoutGrid, Clock, Link2, RotateCcw, Layers, FileText, Trash2, Edit3 } from 'lucide-react'
+import { Plus, ZoomIn, ZoomOut, Maximize2, Search, X, ExternalLink, Sparkles, CalendarDays, Network, LayoutGrid, Clock, Link2, RotateCcw, Layers, FileText, Trash2, Edit3, GripVertical, BookmarkPlus, Library } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -298,6 +298,14 @@ const CLUSTER_CONFIG: Record<Cluster, {
 }
 
 
+// ─── Cluster mesh gradients ────────────────────────────────────────────────────
+const CLUSTER_GRADIENT: Record<Cluster, string> = {
+  frontend: 'linear-gradient(135deg, #93c5fd 0%, #3b82f6 45%, #6366f1 100%)',
+  design:   'linear-gradient(135deg, #d8b4fe 0%, #8b5cf6 45%, #ec4899 100%)',
+  backend:  'linear-gradient(135deg, #6ee7b7 0%, #10b981 45%, #0891b2 100%)',
+  ai:       'linear-gradient(135deg, #fde68a 0%, #f59e0b 45%, #f97316 100%)',
+}
+
 // ─── Graph layout positions (pre-computed force-directed) ──────────────────────
 // Nodes positioned by relationship proximity:
 // - Higher degree nodes (more connections) placed more centrally
@@ -335,18 +343,19 @@ const CARD_H = 168
 
 interface OgpPreview { title: string; description: string; image: string; siteName: string; domain: string }
 
-function AddDialog({ onClose, onSave }: {
+function AddDialog({ onClose, onSave, initialUrl }: {
   onClose: () => void
   onSave: (url: string, ogp: OgpPreview, cluster: Cluster) => Promise<void>
+  initialUrl?: string
 }) {
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState(initialUrl ?? '')
   const [fetching, setFetching] = useState(false)
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState<OgpPreview | null>(null)
   const [cluster, setCluster] = useState<Cluster>('design')
 
-  const handleFetch = async () => {
-    const trimmed = url.trim()
+  const handleFetch = async (overrideUrl?: string) => {
+    const trimmed = (overrideUrl ?? url).trim()
     if (!trimmed) return
     setFetching(true)
     try {
@@ -356,6 +365,21 @@ function AddDialog({ onClose, onSave }: {
       setFetching(false)
     }
   }
+
+  // On mount: if initialUrl given use it, otherwise try clipboard
+  useEffect(() => {
+    if (initialUrl?.startsWith('http')) {
+      handleFetch(initialUrl)
+      return
+    }
+    navigator.clipboard.readText().then(text => {
+      const trimmed = text.trim()
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        setUrl(trimmed)
+        handleFetch(trimmed)
+      }
+    }).catch(() => {}) // ignore permission errors silently
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
     if (!preview) return
@@ -854,12 +878,12 @@ function StackCard({
                 `border-color     0.22s ease`,
               ].join(', '),
               boxShadow: isCardHovered
-                ? `0 0 0 1.5px ${cfg.accent}, 0 16px 40px rgba(0,0,0,0.16), 0 4px 10px rgba(0,0,0,0.08)`
+                ? `0 0 0 1.5px ${cfg.accent}, 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)`
                 : fanned
-                ? '0 6px 22px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.05)'
+                ? '0 8px 28px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.05)'
                 : `0 4px 20px ${cfg.accent}33, 0 1px 4px ${cfg.accent}22`,
               cursor: fanned ? 'pointer' : 'default',
-              borderRadius: 14,
+              borderRadius: 20,
               overflow: 'hidden',
               backgroundColor: fanned ? 'white' : cfg.accent,
               border: isCardHovered
@@ -882,70 +906,33 @@ function StackCard({
               {/* When collapsed and this is the front (top) card: colored thumbnail */}
               {isTopCard && !fanned ? (
                 <>
-                  {/* Header row: icon + label */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    {(() => { const Icon = CLUSTER_ICON[cluster]; return (
-                      <Icon size={20} color="rgba(255,255,255,0.9)" strokeWidth={1.6} />
-                    )})()}
-                    <p style={{
-                      fontSize: 13, fontWeight: 700, color: 'white',
-                      lineHeight: 1.2, margin: 0, letterSpacing: '-0.01em',
-                    }}>
-                      {cfg.label}
-                    </p>
-                    <span style={{
-                      marginLeft: 'auto', fontSize: 8.5, fontWeight: 600,
-                      color: 'rgba(255,255,255,0.6)',
-                      background: 'rgba(255,255,255,0.15)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      borderRadius: 4, padding: '1px 5px', whiteSpace: 'nowrap',
-                    }}>
-                      {N} cards
-                    </span>
-                  </div>
-
-                  {/* Divider */}
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '2px 0' }} />
-
-                  {/* Summary area */}
-                  {summaryLoading ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                      <div style={{
-                        width: 10, height: 10, borderRadius: '50%',
-                        border: '1.5px solid rgba(255,255,255,0.3)',
-                        borderTopColor: 'rgba(255,255,255,0.8)',
-                        animation: 'spin 0.7s linear infinite',
-                        flexShrink: 0,
-                      }} />
-                      <p style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-                        サマリーを生成中...
-                      </p>
+                  {/* Cluster icon */}
+                  {(() => { const Icon = CLUSTER_ICON[cluster]; return (
+                    <div style={{ marginBottom: 4 }}>
+                      <Icon size={28} color="rgba(255,255,255,0.85)" strokeWidth={1.6} />
                     </div>
-                  ) : clusterSummary ? (
-                    <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                        <Sparkles size={8} color="rgba(255,255,255,0.55)" />
-                        <p style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.55)', margin: 0, fontWeight: 600, letterSpacing: '0.04em' }}>
-                          AI INSIGHT
-                        </p>
-                      </div>
-                      <p style={{
-                        fontSize: 10, color: 'rgba(255,255,255,0.88)',
-                        lineHeight: 1.55, margin: 0, flex: 1,
-                        display: '-webkit-box', WebkitLineClamp: 4,
-                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                      }}>
-                        {clusterSummary}
-                      </p>
-                    </>
-                  ) : (
-                    <p style={{
-                      fontSize: 9, color: 'rgba(255,255,255,0.38)',
-                      margin: 0, marginTop: 'auto',
-                    }}>
-                      hover to preview
-                    </p>
-                  )}
+                  )})()}
+                  {/* Category label */}
+                  <p style={{
+                    fontSize: 16, fontWeight: 700, color: 'white',
+                    lineHeight: 1.2, margin: 0, letterSpacing: '-0.01em',
+                  }}>
+                    {cfg.label}
+                  </p>
+                  {/* Card count */}
+                  <p style={{
+                    fontSize: 10, color: 'rgba(255,255,255,0.55)',
+                    margin: 0, marginTop: 2,
+                  }}>
+                    {N} cards
+                  </p>
+                  {/* Hover hint */}
+                  <p style={{
+                    fontSize: 9, color: 'rgba(255,255,255,0.38)',
+                    margin: 0, marginTop: 'auto',
+                  }}>
+                    hover to preview
+                  </p>
                 </>
               ) : fanned ? (
                 <>
@@ -1018,71 +1005,114 @@ function StackCard({
         )
       })}
 
-      {/* Summary card — shown at arc center when fanned, acts as cover when collapsed */}
-      {fanned && (clusterSummary || summaryLoading) && (
-        <div
-          style={{
-            position: 'absolute',
-            left: CPX - Math.round(CARD_W / 2),
-            top:  CPY - Math.round(CARD_H / 2),
-            width: CARD_W,
-            height: CARD_H,
-            transform: 'translate(0px, 0px) rotate(0deg)',
-            transformOrigin: '50% 50%',
-            zIndex: 0,
-            borderRadius: 14,
-            overflow: 'hidden',
-            backgroundColor: cfg.accent,
-            border: `1px solid ${cfg.accent}`,
-            boxShadow: `0 4px 20px ${cfg.accent}44, 0 1px 4px ${cfg.accent}22`,
-            pointerEvents: 'none',
-            transition: [
-              'transform 0.42s cubic-bezier(0.34,1.56,0.64,1)',
-              'opacity 0.28s ease',
-            ].join(', '),
-          }}
-        >
-          <div style={{ padding: '13px 14px 11px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {(() => { const Icon = CLUSTER_ICON[cluster]; return (
-                <Icon size={16} color="rgba(255,255,255,0.85)" strokeWidth={1.6} />
-              )})()}
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'white', margin: 0, letterSpacing: '-0.01em' }}>
-                {cfg.label}
-              </p>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Sparkles size={8} color="rgba(255,255,255,0.7)" />
-                <p style={{ fontSize: 8, fontWeight: 600, color: 'rgba(255,255,255,0.7)', margin: 0, letterSpacing: '0.05em' }}>
-                  AI INSIGHT
+      {/* Summary card — extra card in the fan arc at index N */}
+      {(clusterSummary || summaryLoading) && (() => {
+        const summaryAngle    = FAN_MAX - N * FAN_STEP
+        const summaryAngleRad = summaryAngle * Math.PI / 180
+        const arcDX = Math.round(FAN_R * Math.cos(summaryAngleRad))
+        const arcDY = Math.round(FAN_R * Math.sin(summaryAngleRad))
+        const tx  = fanned ? arcDX : 0
+        const ty  = fanned ? arcDY : (N === 0 ? 0 : -4)
+        const rot = fanned ? summaryAngle : (N === 0 ? 0 : 3.5)
+        const op  = fanned ? 1 : 0.55
+        const zIdx = fanned ? N + 1 : 0
+        return (
+          <div
+            style={{
+              position: 'absolute',
+              left: CPX - Math.round(CARD_W / 2),
+              top:  CPY - Math.round(CARD_H / 2),
+              width: CARD_W,
+              height: CARD_H,
+              transform: `translate(${tx}px, ${ty}px) rotate(${rot}deg)`,
+              transformOrigin: '50% 50%',
+              zIndex: zIdx,
+              borderRadius: 14,
+              overflow: 'hidden',
+              backgroundColor: cfg.accent,
+              border: `1px solid ${cfg.accent}`,
+              boxShadow: fanned
+                ? `0 0 0 1.5px ${cfg.accent}, 0 6px 22px ${cfg.accent}44, 0 2px 6px rgba(0,0,0,0.1)`
+                : `0 4px 20px ${cfg.accent}33`,
+              transition: [
+                `transform        0.42s cubic-bezier(0.34,1.56,0.64,1) ${N * 35}ms`,
+                `opacity          0.28s ease                           ${N * 35}ms`,
+                `box-shadow       0.22s ease`,
+              ].join(', '),
+              opacity: op,
+              cursor: 'default',
+            }}
+          >
+            <div style={{ padding: '13px 14px 11px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%' }}>
+              {/* Header: icon + label + AI badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {(() => { const Icon = CLUSTER_ICON[cluster]; return (
+                  <Icon size={16} color="rgba(255,255,255,0.85)" strokeWidth={1.6} />
+                )})()}
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'white', margin: 0, letterSpacing: '-0.01em' }}>
+                  {cfg.label}
                 </p>
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <Sparkles size={8} color="rgba(255,255,255,0.75)" />
+                  <p style={{ fontSize: 8, fontWeight: 600, color: 'rgba(255,255,255,0.75)', margin: 0, letterSpacing: '0.05em' }}>
+                    AI INSIGHT
+                  </p>
+                </div>
               </div>
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.2)' }} />
+              {/* Content */}
+              {summaryLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+                  <div style={{
+                    width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+                    border: '1.5px solid rgba(255,255,255,0.3)',
+                    borderTopColor: 'rgba(255,255,255,0.85)',
+                    animation: 'spin 0.7s linear infinite',
+                  }} />
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', margin: 0 }}>生成中...</p>
+                </div>
+              ) : (
+                <p style={{
+                  fontSize: 10.5, color: 'rgba(255,255,255,0.92)',
+                  lineHeight: 1.6, margin: 0,
+                  display: '-webkit-box', WebkitLineClamp: 5,
+                  WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                }}>
+                  {clusterSummary}
+                </p>
+              )}
             </div>
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.18)' }} />
-            {/* Summary */}
-            {summaryLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, justifyContent: 'center' }}>
-                <div style={{
-                  width: 12, height: 12, borderRadius: '50%',
-                  border: '1.5px solid rgba(255,255,255,0.3)',
-                  borderTopColor: 'rgba(255,255,255,0.85)',
-                  animation: 'spin 0.7s linear infinite',
-                }} />
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', margin: 0 }}>生成中...</p>
-              </div>
-            ) : (
-              <p style={{
-                fontSize: 10.5, color: 'rgba(255,255,255,0.9)',
-                lineHeight: 1.6, margin: 0,
-                display: '-webkit-box', WebkitLineClamp: 5,
-                WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              }}>
-                {clusterSummary}
-              </p>
-            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
+    </div>
+  )
+}
+
+function DocStatusBadge({ isDone, accent, onToggle }: {
+  isDone: boolean
+  accent: string
+  onToggle?: () => void
+}) {
+  const badgeColor = isDone ? '#10b981' : accent
+  return (
+    <div
+      role="button"
+      title={isDone ? 'クリックで執筆中に戻す' : 'クリックで完了にする'}
+      onClick={e => { e.stopPropagation(); onToggle?.() }}
+      onMouseDown={e => e.stopPropagation()}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 3,
+        background: `${badgeColor}18`,
+        borderRadius: 6, padding: '2px 5px',
+        cursor: 'pointer',
+        transition: 'background 0.15s',
+      }}
+    >
+      {isDone
+        ? <><span style={{ fontSize: 8 }}>✓</span><span style={{ fontSize: 8, fontWeight: 700, color: badgeColor }}>完了</span></>
+        : <><Edit3 size={8} color={badgeColor} /><span style={{ fontSize: 8, fontWeight: 700, color: badgeColor }}>執筆中</span></>
+      }
     </div>
   )
 }
@@ -1114,6 +1144,8 @@ function ItemCard({
   bundleFrom,
   animDelay,
   affinityTags,
+  docStatus,
+  onDocStatusToggle,
 }: {
   item: KnowledgeItem
   cardTitle: string
@@ -1141,6 +1173,8 @@ function ItemCard({
   bundleFrom?: { x: number; y: number }
   animDelay?: number
   affinityTags?: string[]
+  docStatus?: 'writing' | 'done'
+  onDocStatusToggle?: () => void
 }) {
   const cfg = CLUSTER_CONFIG[item.cluster]
 
@@ -1190,13 +1224,13 @@ function ItemCard({
         transform: bundleTransform,
         transition: bundleTransition,
         boxShadow: isSelected
-          ? `0 0 0 1.5px ${cfg.accent}, 0 4px 12px ${cfg.accent}22, 0 20px 48px -8px rgba(0,0,0,0.18)`
+          ? `0 0 0 1.5px ${cfg.accent}, 0 4px 16px ${cfg.accent}22, 0 20px 48px -8px rgba(0,0,0,0.16)`
           : isHovered
-          ? '0 2px 6px rgba(0,0,0,0.05), 0 16px 40px -6px rgba(0,0,0,0.14)'
+          ? '0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)'
           : affinityTags && affinityTags.length > 0
-          ? `0 0 0 2.5px ${cfg.accent}28, 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px -2px rgba(0,0,0,0.07)`
-          : '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px -2px rgba(0,0,0,0.07)',
-        borderRadius: 14,
+          ? `0 0 0 2px ${cfg.accent}28, 0 4px 24px rgba(0,0,0,0.07)`
+          : '0 4px 24px rgba(0,0,0,0.07)',
+        borderRadius: 20,
         overflow: 'visible',
         backgroundColor: 'transparent',
         border: 'none',
@@ -1207,10 +1241,10 @@ function ItemCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div style={{ borderRadius: 14, overflow: 'hidden', backgroundColor: 'white', border: affinityTags && affinityTags.length > 0 ? `1.5px dashed ${cfg.accent}55` : '1px solid rgba(0,0,0,0.07)', transition: 'border 0.3s ease' }}>
+      <div style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: 'white', border: affinityTags && affinityTags.length > 0 ? `1.5px dashed ${cfg.accent}55` : '1px solid rgba(0,0,0,0.06)', transition: 'border 0.3s ease' }}>
         <div style={{ padding: '13px 14px 11px', display: 'flex', flexDirection: 'column', gap: 7 }}>
 
-          {/* Top row: category badge + "+" button */}
+          {/* Top row: category badge + buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{
               display: 'inline-flex',
@@ -1230,9 +1264,11 @@ function ItemCard({
             </span>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
               {hasPage && (
-                <div style={{ color: '#ccc' }}>
-                  <FileText size={9} />
-                </div>
+                <DocStatusBadge
+                  isDone={(docStatus ?? 'writing') === 'done'}
+                  accent={cfg.accent}
+                  onToggle={onDocStatusToggle}
+                />
               )}
               {/* Trash button */}
               {isHovered && (
@@ -1257,19 +1293,12 @@ function ItemCard({
                 onMouseDown={e => e.stopPropagation()}
                 onClick={onQuickCapture}
                 style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 6,
+                  width: 20, height: 20, borderRadius: 6,
                   border: '1px solid rgba(0,0,0,0.1)',
                   backgroundColor: quickCaptureOpen ? '#111' : 'rgba(0,0,0,0.04)',
                   color: quickCaptureOpen ? 'white' : '#999',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  flexShrink: 0,
-                  padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0, padding: 0,
                 }}
               >
                 <Plus size={11} />
@@ -1385,6 +1414,7 @@ export default function CanvasPage() {
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null)
   const [showPage, setShowPage] = useState(false)
   const [showNewCard, setShowNewCard] = useState(false)
+  const [addDialogInitialUrl, setAddDialogInitialUrl] = useState<string | undefined>(undefined)
   const [quickCaptureId, setQuickCaptureId] = useState<string | null>(null)
   const [dbItems, setDbItems] = useState<KnowledgeItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -1402,6 +1432,8 @@ export default function CanvasPage() {
   const [cardUpdatedAt, setCardUpdatedAt] = useState<Record<string, string>>({})
   const [cardAssignees, setCardAssignees] = useState<Record<string, string[]>>({})
   const [cardTitles, setCardTitles] = useState<Record<string, string>>({})
+  const [cardDocStatus, setCardDocStatus] = useState<Record<string, 'writing' | 'done'>>({})
+
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [bundledClusters, setBundledClusters] = useState<Set<Cluster>>(new Set())
   const [connectionMode, setConnectionMode] = useState<'none' | 'explicit' | 'all'>('explicit')
@@ -1438,6 +1470,7 @@ export default function CanvasPage() {
         setCardSummaries(Object.fromEntries(items.map(i => [i.id, i.summary])))
         setCardAssignees(Object.fromEntries(items.map(i => [i.id, i.assignees])))
         setCardUpdatedAt(Object.fromEntries(items.map(i => [i.id, i.updatedAt])))
+        setCardDocStatus(Object.fromEntries(data.map(row => [row.id, (row.doc_status ?? 'writing') as 'writing' | 'done'])))
         setIsLoading(false)
       })
   }, [])
@@ -1499,7 +1532,8 @@ export default function CanvasPage() {
 
   const onCanvasDoubleClick = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-card]')) return
-    setShowNewCard(true)
+    setAddDialogInitialUrl(undefined)
+    setShowAdd(true)
   }, [])
 
   const handleQuickAdd = useCallback(async (cardId: string, value: string) => {
@@ -1563,6 +1597,21 @@ export default function CanvasPage() {
   const [clusterSummaries, setClusterSummaries] = useState<Partial<Record<Cluster, string>>>({})
   const [clusterSummaryLoading, setClusterSummaryLoading] = useState<Partial<Record<Cluster, boolean>>>({})
 
+  interface InsightSection { title: string; insights: string[] }
+  const [knowledgeSidebar, setKnowledgeSidebar] = useState<{ cluster: Cluster; sections: InsightSection[] } | null>(null)
+  const [knowledgeLoading, setKnowledgeLoading] = useState<Partial<Record<Cluster, boolean>>>({})
+  const [knowledgeSaving, setKnowledgeSaving] = useState(false)
+
+  const [hoveredCluster, setHoveredCluster] = useState<Cluster | null>(null)
+  const clusterHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onCardClusterEnter = useCallback((cluster: Cluster) => {
+    if (clusterHoverTimer.current) clearTimeout(clusterHoverTimer.current)
+    setHoveredCluster(cluster)
+  }, [])
+  const onCardClusterLeave = useCallback(() => {
+    clusterHoverTimer.current = setTimeout(() => setHoveredCluster(null), 200)
+  }, [])
+
   // Mirror state to refs so event handlers always read the latest value
   // without needing to be recreated on every render.
   const scaleRef = useRef(scale)
@@ -1603,11 +1652,11 @@ export default function CanvasPage() {
     // Arrange cards in a grid centered on the stack position
     const clusterItems = allItemsRef.current.filter(i => i.cluster === cluster)
     const cols = Math.ceil(Math.sqrt(clusterItems.length))
-    const GAP_X = CARD_W + 32
-    const GAP_Y = CARD_H + 24
-    const gridW = cols * GAP_X - 32
+    const GAP_X = CARD_W + 16
+    const GAP_Y = CARD_H + 12
+    const gridW = cols * GAP_X - 16
     const rows = Math.ceil(clusterItems.length / cols)
-    const gridH = rows * GAP_Y - 24
+    const gridH = rows * GAP_Y - 12
     const gridPositions: Record<string, { x: number; y: number }> = {}
     clusterItems.forEach((item, idx) => {
       const col = idx % cols
@@ -1935,6 +1984,145 @@ export default function CanvasPage() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const alignCluster = useCallback((cluster: Cluster) => {
+    const items = allItemsRef.current.filter(i => i.cluster === cluster)
+    if (items.length === 0) return
+    const GAP_X = 16
+    const GAP_Y = 12
+    const COLS = Math.ceil(Math.sqrt(items.length))
+    const positions = cardPositionsRef.current
+    // Sort cards by current position (top→bottom, left→right) so grid order feels natural
+    const sorted = [...items].sort((a, b) => {
+      const ay = (positions[a.id] ?? a).y
+      const by = (positions[b.id] ?? b).y
+      const ax = (positions[a.id] ?? a).x
+      const bx = (positions[b.id] ?? b).x
+      return ay !== by ? ay - by : ax - bx
+    })
+    // Anchor to the top-left of the current bounding box so cards don't fly away
+    const xs = items.map(i => (positions[i.id] ?? i).x)
+    const ys = items.map(i => (positions[i.id] ?? i).y)
+    const startX = Math.min(...xs)
+    const startY = Math.min(...ys)
+    const newPositions: Record<string, { x: number; y: number }> = {}
+    sorted.forEach((item, idx) => {
+      const col = idx % COLS
+      const row = Math.floor(idx / COLS)
+      newPositions[item.id] = {
+        x: Math.round(startX + col * (CARD_W + GAP_X)),
+        y: Math.round(startY + row * (CARD_H + GAP_Y)),
+      }
+    })
+    setCardPositions(prev => ({ ...prev, ...newPositions }))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openKnowledgeSidebar = useCallback(async (cluster: Cluster) => {
+    const items = allItemsRef.current.filter(i => i.cluster === cluster)
+    if (items.length === 0) return
+    setKnowledgeSidebar({ cluster, sections: [] })
+    setKnowledgeLoading(prev => ({ ...prev, [cluster]: true }))
+    await new Promise(r => setTimeout(r, 400))
+
+    // カードごとに1テーマ = 1セクション
+    // insights = summary + bodyの抜粋
+    const sections: InsightSection[] = items
+      .map(item => {
+        const summary = (cardSummariesRef.current[item.id] ?? item.summary ?? '').trim()
+        const body = (cardBodiesRef.current[item.id] ?? item.body ?? '').trim()
+        const insights: string[] = []
+
+        if (summary) insights.push(summary)
+
+        if (body) {
+          const lines = body
+            .split('\n')
+            .map(l => l.replace(/^#+\s*/, '').replace(/^[-*•]\s*/, '').trim())
+            .filter(l => l.length > 15 && !l.startsWith('```') && !l.startsWith('|'))
+            .slice(0, 2)
+          insights.push(...lines)
+        }
+
+        if (insights.length === 0) return null
+        return { title: item.title || '(タイトルなし)', insights }
+      })
+      .filter((s): s is InsightSection => s !== null)
+
+    if (sections.length === 0) {
+      sections.push({
+        title: 'ナレッジがありません',
+        insights: ['このクラスターのカードにサマリーやドキュメントを追加してください。'],
+      })
+    }
+
+    setKnowledgeSidebar({ cluster, sections })
+    setKnowledgeLoading(prev => ({ ...prev, [cluster]: false }))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const generateApplyScenes = useCallback(async (sections: { title: string; insights: string[] }[], clusterLabel: string): Promise<string[]> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-apply-scenes', {
+        body: { sections, clusterLabel },
+      })
+      if (error) throw error
+      return (data as { apply_scenes: string[] }).apply_scenes ?? []
+    } catch {
+      return []
+    }
+  }, [])
+
+  const saveKnowledgeSnapshot = useCallback(async () => {
+    if (!knowledgeSidebar || knowledgeSidebar.sections.length === 0) return
+    setKnowledgeSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+      const clusterLabel = CLUSTER_CONFIG[knowledgeSidebar.cluster].label
+      const cardCount = allItemsRef.current.filter(i => i.cluster === knowledgeSidebar.cluster).length
+      const apply_scenes = await generateApplyScenes(knowledgeSidebar.sections, clusterLabel)
+      const { error } = await supabase.from('knowledge_snapshots').insert({
+        user_id: user.id,
+        cluster: knowledgeSidebar.cluster,
+        cluster_label: clusterLabel,
+        sections: knowledgeSidebar.sections,
+        card_count: cardCount,
+        apply_scenes,
+      })
+      if (error) throw error
+      toast.success('ナレッジを統合して保存しました')
+    } catch (e) {
+      toast.error('保存に失敗しました')
+      console.error(e)
+    } finally {
+      setKnowledgeSaving(false)
+    }
+  }, [knowledgeSidebar, generateApplyScenes]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveSingleSection = useCallback(async (section: { title: string; insights: string[] }) => {
+    if (!knowledgeSidebar) return
+    setKnowledgeSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+      const clusterLabel = `${CLUSTER_CONFIG[knowledgeSidebar.cluster].label} — ${section.title}`
+      const apply_scenes = await generateApplyScenes([section], clusterLabel)
+      const { error } = await supabase.from('knowledge_snapshots').insert({
+        user_id: user.id,
+        cluster: knowledgeSidebar.cluster,
+        cluster_label: clusterLabel,
+        sections: [section],
+        card_count: 1,
+        apply_scenes,
+      })
+      if (error) throw error
+      toast.success(`「${section.title}」を保存しました`)
+    } catch (e) {
+      toast.error('保存に失敗しました')
+      console.error(e)
+    } finally {
+      setKnowledgeSaving(false)
+    }
+  }, [knowledgeSidebar, generateApplyScenes]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const collapseCluster = useCallback((cluster: Cluster) => {
     if (bundledClusters.has(cluster)) return
     const snap = getClusterCentroid(cluster)
@@ -2193,6 +2381,12 @@ export default function CanvasPage() {
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
         onDoubleClick={onCanvasDoubleClick}
+        onClick={e => {
+          if (!(e.target as HTMLElement).closest('[data-card]')) {
+            setSelected(null)
+            setKnowledgeSidebar(null)
+          }
+        }}
       >
         <div
           style={{
@@ -2463,8 +2657,8 @@ export default function CanvasPage() {
                   cardDragMoved.current = false
                   setDraggingCardId(item.id)
                 }}
-                onMouseEnter={() => setHovered(item.id)}
-                onMouseLeave={() => setHovered(null)}
+                onMouseEnter={() => { setHovered(item.id); onCardClusterEnter(item.cluster) }}
+                onMouseLeave={() => { setHovered(null); onCardClusterLeave() }}
                 posX={displayPosX}
                 posY={displayPosY}
                 quickCaptureOpen={quickCaptureId === item.id}
@@ -2479,69 +2673,115 @@ export default function CanvasPage() {
                 bundleFrom={isExpanding ? (expandFromPos[item.cluster] ?? centroid) : undefined}
                 animDelay={stagger}
                 affinityTags={affinityMap[item.id]}
+                docStatus={cardDocStatus[item.id] ?? 'writing'}
+                onDocStatusToggle={async () => {
+                  const next = (cardDocStatus[item.id] ?? 'writing') === 'done' ? 'writing' : 'done'
+                  setCardDocStatus(prev => ({ ...prev, [item.id]: next }))
+                  await supabase.from('vault_cards').update({ doc_status: next }).eq('id', item.id)
+                }}
               />
             )
           })}
 
-          {/* Per-cluster "まとめる" button for expanded clusters with >1 card */}
+          {/* Per-cluster header bar — visible only when hovering cards in that cluster */}
           {(['frontend', 'design', 'backend', 'ai'] as Cluster[])
             .filter(c =>
               !bundledClusters.has(c) &&
               !collapsingClusters.has(c) &&
               !expandingClusters.has(c) &&
-              allItems.filter(i => i.cluster === c).length > 1
+              allItems.filter(i => i.cluster === c).length > 1 &&
+              hoveredCluster === c
             )
             .map(cluster => {
-              const centroid = getClusterCentroid(cluster)
               const cfg = CLUSTER_CONFIG[cluster]
+              const ClusterIcon = CLUSTER_ICON[cluster]
               const clusterItems = allItems.filter(i => i.cluster === cluster)
-              const minY = Math.min(...clusterItems.map(i => (cardPositions[i.id] ?? { x: i.x, y: i.y }).y))
+              const positions = clusterItems.map(i => cardPositions[i.id] ?? { x: i.x, y: i.y })
+              const minX = Math.min(...positions.map(p => p.x))
+              const maxX = Math.max(...positions.map(p => p.x))
+              const minY = Math.min(...positions.map(p => p.y))
+              const MIN_BAR = 360
+              const naturalWidth = maxX + CARD_W - minX
+              const barWidth = Math.max(naturalWidth, MIN_BAR)
+              // Center over the cluster's bounding box
+              const clusterCenterX = minX + (maxX + CARD_W - minX) / 2
               return (
                 <div
-                  key={`collapse-btn-${cluster}`}
+                  key={`cluster-header-${cluster}`}
+                  onMouseEnter={() => onCardClusterEnter(cluster)}
+                  onMouseLeave={onCardClusterLeave}
                   style={{
                     position: 'absolute',
-                    left: centroid.x + CARD_W / 2,
-                    top: minY - 40,
+                    left: clusterCenterX,
+                    top: minY - 48,
+                    width: barWidth,
                     transform: 'translateX(-50%)',
                     pointerEvents: 'auto',
                     zIndex: 20,
+                    cursor: 'grab',
+                    userSelect: 'none',
                   }}
                   onMouseDown={e => { e.stopPropagation(); onStackMouseDown(e, cluster) }}
                 >
-                  <button
-                    onClick={() => { if (stackDragMoved.current) return; collapseCluster(cluster) }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      padding: '5px 11px',
-                      borderRadius: 999,
-                      border: `1px solid ${cfg.accent}44`,
-                      background: `${cfg.accent}12`,
-                      color: cfg.accent,
-                      fontSize: 11,
-                      fontWeight: 500,
-                      cursor: 'grab',
-                      whiteSpace: 'nowrap',
-                      backdropFilter: 'blur(6px)',
-                      boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
-                      transition: 'background 0.15s, box-shadow 0.15s',
-                    }}
-                    onMouseEnter={e => {
-                      const el = e.currentTarget as HTMLButtonElement
-                      el.style.background = `${cfg.accent}22`
-                      el.style.boxShadow = '0 2px 10px rgba(0,0,0,0.12)'
-                    }}
-                    onMouseLeave={e => {
-                      const el = e.currentTarget as HTMLButtonElement
-                      el.style.background = `${cfg.accent}12`
-                      el.style.boxShadow = '0 1px 6px rgba(0,0,0,0.08)'
-                    }}
-                  >
-                    <Layers size={11} />
-                    まとめる
-                  </button>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '6px 8px 6px 10px',
+                    borderRadius: 10,
+                    border: `1px solid ${cfg.accent}28`,
+                    background: `${cfg.accent}0c`,
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+                  }}>
+                    {/* Grip + icon + label */}
+                    <GripVertical size={13} color={cfg.accent} opacity={0.45} style={{ flexShrink: 0 }} />
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 6,
+                      background: cfg.accent, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <ClusterIcon size={11} color="white" />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: cfg.accent, flex: 1, letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {cfg.label}
+                    </span>
+                    <span style={{ fontSize: 10, color: `${cfg.accent}80`, marginRight: 4 }}>
+                      {clusterItems.length}枚
+                    </span>
+
+                    {/* Divider */}
+                    <div style={{ width: 1, height: 16, background: `${cfg.accent}25`, flexShrink: 0 }} />
+
+                    {/* Action buttons */}
+                    {[
+                      { label: '整列', icon: <LayoutGrid size={10} />, onClick: (e: React.MouseEvent) => { e.stopPropagation(); alignCluster(cluster) }, solid: false },
+                      { label: 'ナレッジ', icon: <Sparkles size={10} />, onClick: (e: React.MouseEvent) => { e.stopPropagation(); openKnowledgeSidebar(cluster) }, solid: false },
+                      { label: 'まとめる', icon: <Layers size={10} />, onClick: (e: React.MouseEvent) => { e.stopPropagation(); if (!stackDragMoved.current) collapseCluster(cluster) }, solid: true },
+                    ].map(btn => (
+                      <button
+                        key={btn.label}
+                        onMouseDown={e => e.stopPropagation()}
+                        onClick={btn.onClick}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          padding: '4px 9px',
+                          borderRadius: 6,
+                          border: `1px solid ${btn.solid ? cfg.accent : cfg.accent + '40'}`,
+                          background: btn.solid ? cfg.accent : 'transparent',
+                          color: btn.solid ? '#fff' : cfg.accent,
+                          fontSize: 11, fontWeight: 500,
+                          cursor: 'pointer', whiteSpace: 'nowrap',
+                          transition: 'opacity 0.12s',
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.75' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+                      >
+                        {btn.icon}{btn.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )
             })
@@ -2591,7 +2831,7 @@ export default function CanvasPage() {
       {/* ── Topic Workspace ── */}
       {selected && (
         <TopicWorkspace
-          wrapperClass="absolute right-0 top-0 h-full"
+          wrapperClass="fixed right-0 top-0 h-full"
           item={selected}
           cardTitle={getTitle(selected.id, selected.title)}
           onTitleChange={v => {
@@ -2666,6 +2906,12 @@ export default function CanvasPage() {
             debouncedSave(selected.id, 'body', v)
           }}
           onClose={() => setShowPage(false)}
+          docStatus={cardDocStatus[selected.id] ?? 'writing'}
+          onDocStatusToggle={async () => {
+            const next = (cardDocStatus[selected.id] ?? 'writing') === 'done' ? 'writing' : 'done'
+            setCardDocStatus(prev => ({ ...prev, [selected.id]: next }))
+            await supabase.from('vault_cards').update({ doc_status: next }).eq('id', selected.id)
+          }}
         />
       )}
 
@@ -2750,7 +2996,7 @@ export default function CanvasPage() {
       </div>
 
       {/* ── Bottom-right: search + add ── */}
-      <div className="absolute bottom-6 right-6 z-10 flex items-center gap-2">
+      <div className="absolute bottom-6 right-20 z-10 flex items-center gap-2">
         {searchOpen ? (
           <div className="flex items-center bg-white/95 backdrop-blur-sm rounded-full border border-neutral-200 shadow-sm pl-3 pr-1 gap-1">
             <Search size={12} className="text-neutral-400 shrink-0" />
@@ -2784,13 +3030,6 @@ export default function CanvasPage() {
         >
           <Edit3 size={13} />
           新規トピック
-        </button>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 bg-neutral-900 text-white text-[11px] font-medium px-4 py-2.5 rounded-full shadow-lg hover:bg-neutral-700 active:scale-95 transition-all"
-        >
-          <Plus size={13} />
-          URLを保存
         </button>
       </div>
 
@@ -2931,7 +3170,8 @@ export default function CanvasPage() {
       {/* ── Add dialog ── */}
       {showAdd && (
         <AddDialog
-          onClose={() => setShowAdd(false)}
+          initialUrl={addDialogInitialUrl}
+          onClose={() => { setShowAdd(false); setAddDialogInitialUrl(undefined) }}
           onSave={async (url, ogp, cluster) => {
             const newLink: CardLink = {
               id: `l${Date.now()}`, url, title: ogp.title, domain: ogp.domain,
@@ -2974,6 +3214,193 @@ export default function CanvasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Knowledge sidebar */}
+      {knowledgeSidebar && (() => {
+        const cfg = CLUSTER_CONFIG[knowledgeSidebar.cluster]
+        const isLoading = knowledgeLoading[knowledgeSidebar.cluster]
+        const KnowledgeClusterIcon = CLUSTER_ICON[knowledgeSidebar.cluster]
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              right: selected ? 380 : 0,
+              width: 380,
+              height: '100vh',
+              background: '#fafafa',
+              borderLeft: '1px solid rgb(229 231 235)',
+              boxShadow: '-8px 0 32px rgba(0,0,0,0.1)',
+              zIndex: 19,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              transition: 'right 0.25s ease',
+            }}
+          >
+            {/* Bold colored header */}
+            <div style={{
+              background: CLUSTER_GRADIENT[knowledgeSidebar.cluster],
+              padding: '20px 20px 18px',
+              flexShrink: 0,
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              {/* Decorative circle */}
+              <div style={{
+                position: 'absolute', right: -24, top: -24,
+                width: 96, height: 96, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.08)',
+              }} />
+              <div style={{
+                position: 'absolute', right: 20, bottom: -32,
+                width: 64, height: 64, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+              }} />
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, position: 'relative' }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: 'rgba(255,255,255,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <KnowledgeClusterIcon size={16} color="white" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 3px' }}>
+                    ナレッジ抽出
+                  </p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>
+                    {cfg.label}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setKnowledgeSidebar(null)}
+                  style={{
+                    width: 28, height: 28, borderRadius: 8, border: 'none',
+                    background: 'rgba(255,255,255,0.15)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}
+                >
+                  <X size={13} color="white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px' }}>
+              {isLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, gap: 12 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    border: `2px solid ${cfg.accent}30`,
+                    borderTopColor: cfg.accent,
+                    animation: 'spin 0.8s linear infinite',
+                  }} />
+                  <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>気づきを抽出中…</p>
+                </div>
+              ) : knowledgeSidebar.sections.length === 0 ? (
+                <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 40 }}>データがありません</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {knowledgeSidebar.sections.map((section, si) => (
+                    <div key={si}>
+                      {/* Section header with large number + save button */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                        <span style={{
+                          fontSize: 28, fontWeight: 800, lineHeight: 1,
+                          color: `${cfg.accent}25`, letterSpacing: '-0.03em', flexShrink: 0,
+                        }}>
+                          {String(si + 1).padStart(2, '0')}
+                        </span>
+                        <p style={{ fontSize: 11.5, fontWeight: 700, color: '#1f2937', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.3, flex: 1 }}>
+                          {section.title}
+                        </p>
+                        <button
+                          onClick={() => saveSingleSection(section)}
+                          disabled={knowledgeSaving}
+                          title="このテーマを保存"
+                          style={{
+                            flexShrink: 0, padding: '3px 8px', borderRadius: 6,
+                            border: `1px solid ${cfg.accent}44`,
+                            background: '#fff', color: cfg.accent,
+                            fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 3,
+                            opacity: knowledgeSaving ? 0.5 : 1,
+                          }}
+                        >
+                          <BookmarkPlus size={9} />保存
+                        </button>
+                      </div>
+                      {/* Insight cards */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {section.insights.map((insight, ii) => (
+                          <div key={ii} style={{
+                            background: '#fff',
+                            borderRadius: 14,
+                            border: '1px solid rgba(0,0,0,0.05)',
+                            padding: '10px 14px',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                          }}>
+                            <p style={{ fontSize: 12, lineHeight: 1.7, color: '#374151', margin: 0 }}>
+                              {insight}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0, background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Save button */}
+              <button
+                onClick={saveKnowledgeSnapshot}
+                disabled={!!isLoading || knowledgeSaving || knowledgeSidebar.sections.length === 0}
+                style={{
+                  width: '100%', padding: '9px 0',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: isLoading || knowledgeSaving || knowledgeSidebar.sections.length === 0
+                    ? '#e5e7eb'
+                    : CLUSTER_GRADIENT[knowledgeSidebar.cluster],
+                  color: isLoading || knowledgeSaving || knowledgeSidebar.sections.length === 0 ? '#9ca3af' : '#fff',
+                  fontSize: 11.5, fontWeight: 700,
+                  cursor: (isLoading || knowledgeSaving || knowledgeSidebar.sections.length === 0) ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  letterSpacing: '0.01em',
+                  boxShadow: isLoading || knowledgeSaving || knowledgeSidebar.sections.length === 0 ? 'none' : '0 4px 16px rgba(0,0,0,0.15)',
+                }}
+              >
+                <BookmarkPlus size={12} />
+                {knowledgeSaving ? '保存中…' : 'すべてを統合して保存'}
+              </button>
+              {/* Regenerate button */}
+              <button
+                onClick={() => openKnowledgeSidebar(knowledgeSidebar.cluster)}
+                disabled={!!isLoading}
+                style={{
+                  width: '100%', padding: '7px 0',
+                  borderRadius: 8,
+                  border: `1px solid ${cfg.accent}44`,
+                  background: '#fff',
+                  color: cfg.accent,
+                  fontSize: 11, fontWeight: 600,
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  opacity: isLoading ? 0.5 : 1,
+                  letterSpacing: '0.01em',
+                }}
+              >
+                <RotateCcw size={11} />
+                再生成
+              </button>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Clock, Grid3X3, List, Search, Table, ChevronUp, ChevronDown, Link as LinkIcon } from 'lucide-react'
+import { Clock, Grid3X3, List, Search, Table, ChevronUp, ChevronDown, Link as LinkIcon, ArrowUpRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,14 @@ import { fetchOgp } from '@/lib/ogp'
 import type { CardLink, ChatMessage } from '@/lib/card-types'
 import { TopicWorkspace } from '@/components/TopicWorkspace'
 import { CardPage } from '@/components/CardPage'
+import { getClusterVisual } from '@/lib/card-constants'
+
+const CLUSTER_TAG_COLOR: Record<string, string> = {
+  frontend: '#3b82f6',
+  design:   '#8b5cf6',
+  backend:  '#10b981',
+  ai:       '#f59e0b',
+}
 
 // ── Types ─────────────────────────────────────────────────────────
 interface VaultItem {
@@ -52,8 +60,10 @@ export default function Vault() {
   const [selectedTag, setSelectedTag] = useState('すべて')
   const [sortKey, setSortKey]     = useState<SortKey>('updatedAt')
   const [sortDir, setSortDir]     = useState<SortDir>('desc')
-  const [peekItem, setPeekItem]   = useState<VaultItem | null>(null)
-  const [showPage, setShowPage]   = useState(false)
+  const [peekItem, setPeekItem]         = useState<VaultItem | null>(null)
+  const [showPage, setShowPage]         = useState(false)
+  const [hoveredRelatedId, setHoveredRelatedId] = useState<string | null>(null)
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({})
 
   // Per-card editable state (mirrors canvas pattern)
   const [cardTitles,    setCardTitles]    = useState<Record<string, string>>({})
@@ -63,6 +73,13 @@ export default function Vault() {
   const [cardBodies,    setCardBodies]    = useState<Record<string, string>>({})
   const [cardAssignees, setCardAssignees] = useState<Record<string, string[]>>({})
   const [cardMessages,  setCardMessages]  = useState<Record<string, ChatMessage[]>>({})
+
+  const handleHoverRelatedCard = (id: string | null) => {
+    setHoveredRelatedId(id)
+    if (id && cardRefs.current[id]) {
+      cardRefs.current[id]!.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }
 
   // Debounced save
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
@@ -152,11 +169,11 @@ export default function Vault() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6" style={{ minHeight: '100%', background: '#ebebeb' }}>
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">リスト</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-4xl font-extrabold tracking-[-0.03em] text-neutral-900 leading-tight">リスト</h1>
+        <p className="text-neutral-400 mt-1.5 text-sm">
           {isLoading ? '読み込み中...' : `${items.length}件のカード`}
         </p>
       </div>
@@ -192,57 +209,112 @@ export default function Vault() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-40 rounded-xl bg-neutral-100 animate-pulse" />
+            <div key={i} style={{ height: 210, borderRadius: 36, background: '#e0e0e4', animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
       )}
 
       {/* Grid view */}
       {!isLoading && viewMode === 'grid' && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sorted.map((item) => (
-            <Card key={item.id} className="group transition-shadow hover:shadow-md cursor-pointer"
-              onClick={() => setPeekItem(item)}>
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold leading-tight line-clamp-2">
-                      {cardTitles[item.id] || '(タイトルなし)'}
-                    </h3>
-                    {item.cluster && <p className="text-muted-foreground mt-0.5 text-xs">{item.cluster}</p>}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((item) => {
+            const clusterColor = CLUSTER_TAG_COLOR[item.cluster] ?? '#6b7280'
+            const isSelected = item.id === peekItem?.id
+            return (
+              <div
+                  key={item.id}
+                  ref={el => { cardRefs.current[item.id] = el }}
+                  onClick={() => setPeekItem(item)}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: 20,
+                    padding: '24px',
+                    paddingTop: '20px',
+                    cursor: 'pointer',
+                    minHeight: 210,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    outline: isSelected ? '3px solid rgba(0,0,0,0.25)' : 'none',
+                    outlineOffset: 3,
+                    transition: 'filter 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.filter = 'brightness(0.97)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.filter = '' }}
+                >
+                  {/* Top row: tag + button */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    {item.cluster ? (
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: 20,
+                        background: clusterColor,
+                        color: '#fff',
+                        letterSpacing: '0.02em',
+                      }}>
+                        {getClusterVisual(item.cluster).label}
+                      </span>
+                    ) : <span />}
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <ArrowUpRight size={16} strokeWidth={2} color="#111827" />
+                    </div>
                   </div>
-                </div>
-                {(cardSummaries[item.id] || item.summary) && (
-                  <p className="text-muted-foreground mt-3 text-sm line-clamp-3">
-                    {cardSummaries[item.id] || item.summary}
-                  </p>
-                )}
-                {item.tags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {item.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                    ))}
+
+                  {/* Title */}
+                  <h3 style={{
+                    fontSize: 17,
+                    fontWeight: 800,
+                    color: '#111827',
+                    margin: 0,
+                    lineHeight: 1.35,
+                    letterSpacing: '-0.02em',
+                    flex: 1,
+                  }}>
+                    {cardTitles[item.id] || '(タイトルなし)'}
+                  </h3>
+
+                  <div style={{ minHeight: 20 }} />
+
+                  {/* Footer */}
+                  <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Clock size={10} />{formatDate(item.updatedAt)}
+                    </span>
+                    {(cardLinks[item.id]?.length ?? 0) > 0 && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <LinkIcon size={10} />{cardLinks[item.id].length}件
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="text-muted-foreground mt-3 flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDate(item.updatedAt)}</span>
-                  {(cardLinks[item.id]?.length ?? 0) > 0 && (
-                    <span className="flex items-center gap-1"><LinkIcon className="h-3 w-3" />{cardLinks[item.id].length}件</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            )
+          })}
         </div>
       )}
 
       {/* List view */}
       {!isLoading && viewMode === 'list' && (
         <div className="space-y-3">
-          {sorted.map((item) => (
-            <Card key={item.id} className="group transition-shadow hover:shadow-md cursor-pointer"
+          {sorted.map((item) => {
+            const isSelected = item.id === peekItem?.id
+            const isHovered = item.id === hoveredRelatedId
+            return (
+            <Card key={item.id}
+              ref={el => { cardRefs.current[item.id] = el }}
+              className={`group transition-all cursor-pointer hover:shadow-md ${isSelected ? 'ring-2 ring-neutral-900 shadow-md' : ''} ${isHovered ? 'ring-2 ring-blue-400 shadow-lg bg-blue-50/40' : ''}`}
               onClick={() => setPeekItem(item)}>
               <CardContent className="pt-4">
                 <div className="flex items-start gap-4">
@@ -269,7 +341,7 @@ export default function Vault() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )})}
         </div>
       )}
 
@@ -298,7 +370,14 @@ export default function Vault() {
             <tbody>
               {sorted.map((item, i) => (
                 <tr key={item.id}
-                  className={`group border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer ${i % 2 !== 0 ? 'bg-muted/10' : ''}`}
+                  ref={el => { cardRefs.current[item.id] = el }}
+                  className={`group border-b border-border last:border-0 transition-colors cursor-pointer ${
+                    item.id === hoveredRelatedId
+                      ? 'bg-blue-50 ring-1 ring-inset ring-blue-300'
+                      : item.id === peekItem?.id
+                      ? 'bg-neutral-100 ring-1 ring-inset ring-neutral-300'
+                      : i % 2 !== 0 ? 'bg-muted/10 hover:bg-muted/30' : 'hover:bg-muted/30'
+                  }`}
                   onClick={() => setPeekItem(item)}>
                   <td className="px-4 py-3 max-w-xs">
                     <span className="truncate font-medium block">{cardTitles[item.id] || '(タイトルなし)'}</span>
@@ -388,6 +467,7 @@ export default function Vault() {
           onDelete={() => deleteItem(peekItem.id)}
           allItems={items}
           onSelectItem={item => setPeekItem(item as VaultItem)}
+          onHoverRelatedCard={handleHoverRelatedCard}
         />
       )}
 

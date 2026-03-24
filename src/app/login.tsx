@@ -12,15 +12,27 @@ export default function LoginPage({ unauthorized }: { unauthorized?: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden" style={{ backgroundColor: '#EEEAE4', paddingBottom: 'clamp(200px, 28vh, 320px)' }}>
+      <style>{`
+        @keyframes peepFloat { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
+        @keyframes peepFloatFlip { 0%,100%{transform:scaleX(-1) translateY(0px)} 50%{transform:scaleX(-1) translateY(-8px)} }
+      `}</style>
+
+      {/* Peep characters */}
+      <div className="absolute inset-x-0 bottom-0 pointer-events-none select-none flex items-end justify-center" style={{ gap: 'clamp(8px, 2vw, 32px)', zIndex: 0 }}>
+        <img src="/peeps/peep-standing-12.svg" alt="" style={{ height: 370, maxHeight: '31vh', display: 'block', animation: 'peepFloat 7.2s ease-in-out 0.4s infinite' }} />
+        <img src="/peeps/peep-standing-9.svg" alt="" style={{ height: 370, maxHeight: '31vh', display: 'block', animation: 'peepFloatFlip 7.0s ease-in-out 0.6s infinite' }} />
+        <img src="/peeps/peep-standing-19.svg" alt="" style={{ height: 370, maxHeight: '31vh', display: 'block', animation: 'peepFloat 8s ease-in-out 1s infinite' }} />
+        <img src="/peeps/peep-standing-22.svg" alt="" style={{ height: 370, maxHeight: '31vh', display: 'block', animation: 'peepFloat 6.8s ease-in-out 0.8s infinite' }} />
+        <img src="/peeps/peep-standing-13.svg" alt="" style={{ height: 370, maxHeight: '31vh', display: 'block', animation: 'peepFloatFlip 7.3s ease-in-out 1.2s infinite' }} />
+        <img src="/peeps/peep-standing-25.svg" alt="" style={{ height: 370, maxHeight: '31vh', display: 'block', animation: 'peepFloatFlip 7.4s ease-in-out 1.2s infinite' }} />
+      </div>
+
+      <div className="w-full max-w-sm relative" style={{ zIndex: 1 }}>
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-12 h-12 rounded-2xl bg-neutral-900 flex items-center justify-center mb-4 shadow-lg">
-            <span className="text-white text-xl font-bold tracking-tight">V</span>
-          </div>
-          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Vault</h1>
-          <p className="text-sm text-neutral-500 mt-1">チームのナレッジを一箇所に</p>
+          <img src="/vault_logo.svg" alt="Vault" style={{ height: 56, display: 'block', marginBottom: 12 }} />
+          <p className="text-sm text-neutral-500">チームのナレッジを一箇所に</p>
         </div>
 
         {/* Card */}

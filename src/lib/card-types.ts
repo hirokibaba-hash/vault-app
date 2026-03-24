@@ -21,4 +21,5 @@ export interface CardItemBase {
   cluster: string
   tags: string[]
   connections: string[]
+  summary?: string
 }

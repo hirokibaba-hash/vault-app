@@ -54,7 +54,7 @@ export function useAuth() {
     supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/canvas`,
         queryParams: {
           // Prompt account selection every time for clarity
           prompt: 'select_account',

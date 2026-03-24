@@ -14,12 +14,15 @@ function charCount(text: string) {
 
 export function CardPage({
   item, body, onBodyChange, onClose, backLabel = 'キャンバスに戻る',
+  docStatus = 'writing', onDocStatusToggle,
 }: {
   item: CardItemBase
   body: string
   onBodyChange: (v: string) => void
   onClose: () => void
   backLabel?: string
+  docStatus?: 'writing' | 'done'
+  onDocStatusToggle?: () => void
 }) {
   const [mode, setMode] = useState<'edit' | 'preview'>(body.trim() ? 'preview' : 'edit')
   const cfg = getClusterVisual(item.cluster)
@@ -44,6 +47,21 @@ export function CardPage({
           <ArrowLeft size={13} />{backLabel}
         </button>
         <div className="flex-1" />
+        {onDocStatusToggle && (
+          <button
+            onClick={onDocStatusToggle}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: docStatus === 'done' ? '#10b98118' : `${cfg.accent}18`,
+              borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
+              border: `1px solid ${docStatus === 'done' ? '#10b98140' : `${cfg.accent}40`}`,
+              transition: 'all 0.15s',
+            }}>
+            {docStatus === 'done'
+              ? <><span style={{ fontSize: 10 }}>✓</span><span style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>完了</span></>
+              : <><Edit3 size={10} color={cfg.accent} /><span style={{ fontSize: 11, fontWeight: 700, color: cfg.accent }}>執筆中</span></>}
+          </button>
+        )}
         <div className="flex items-center bg-neutral-100 rounded-lg p-0.5">
           <button onClick={() => setMode('edit')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all ${mode === 'edit' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}>

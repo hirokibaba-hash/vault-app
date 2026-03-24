@@ -9,7 +9,7 @@ export function TopicWorkspace({
   onNotesChange, onSummaryChange, onAssigneesChange,
   onAddLink, onDeleteLink, onSendMessage,
   onOpenPage, onClose, onDelete,
-  allItems, onSelectItem,
+  allItems, onSelectItem, onHoverRelatedCard,
   wrapperClass = 'fixed right-0 top-0 h-full',
 }: {
   item: CardItemBase
@@ -32,6 +32,7 @@ export function TopicWorkspace({
   onDelete: () => void
   allItems: CardItemBase[]
   onSelectItem: (item: CardItemBase) => void
+  onHoverRelatedCard?: (id: string | null) => void
   wrapperClass?: string
 }) {
   const [tab, setTab] = useState<'sources' | 'chat'>('sources')
@@ -85,7 +86,6 @@ export function TopicWorkspace({
 
   return (
     <div className={`${wrapperClass} w-[380px] bg-white border-l border-neutral-100 shadow-2xl z-20 flex flex-col`}>
-      <div className="h-0.5 w-full shrink-0" style={{ backgroundColor: cfg.accent }} />
 
       {/* Header */}
       <div className="px-4 pt-4 pb-3 border-b border-neutral-100 shrink-0">
@@ -197,7 +197,7 @@ export function TopicWorkspace({
               : (
                 <div className="flex flex-col gap-2">
                   {links.map(link => (
-                    <div key={link.id} className="group rounded-xl border border-neutral-100 hover:border-neutral-200 bg-neutral-50/50 hover:bg-white overflow-hidden transition-all">
+                    <div key={link.id} className="group rounded-2xl border border-neutral-100 hover:border-neutral-200 bg-neutral-50/50 hover:bg-white overflow-hidden transition-all hover:shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
                       {link.image && (
                         <img src={link.image} alt="" className="w-full h-28 object-cover"
                           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -284,26 +284,39 @@ export function TopicWorkspace({
                         const rc = getClusterVisual(r.cluster)
                         const RIcon = getClusterIcon(r.cluster)
                         return (
-                          <button key={r.id} onClick={() => onSelectItem(r)}
-                            className="group w-full text-left flex items-start gap-2.5 p-2.5 rounded-xl border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50 hover:shadow-sm transition-all">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: rc.accent }}>
-                              <RIcon size={12} color="white" />
+                          <div key={r.id}
+                            className="group/card cursor-pointer rounded-2xl border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50 hover:shadow-[0_4px_24px_rgba(0,0,0,0.07)] transition-all"
+                            onClick={() => onSelectItem(r)}
+                            onMouseEnter={() => onHoverRelatedCard?.(r.id)}
+                            onMouseLeave={() => onHoverRelatedCard?.(null)}
+                          >
+                            <div className="flex items-start gap-2.5 p-2.5">
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: rc.accent }}>
+                                <RIcon size={12} color="white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-neutral-800 truncate group-hover/card:text-neutral-900 transition-colors">{r.title}</p>
+                                {sharedTags.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {sharedTags.map(tag => (
+                                      <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                                        style={{ backgroundColor: `${rc.accent}18`, color: rc.accent }}>{tag}</span>
+                                    ))}
+                                  </div>
+                                ) : type === 'explicit' ? (
+                                  <p className="text-[9.5px] text-neutral-400 mt-0.5">明示的に接続</p>
+                                ) : null}
+                              </div>
+                              <ArrowLeft size={10} className="rotate-180 text-neutral-300 group-hover/card:text-neutral-500 mt-1.5 shrink-0 transition-colors" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[11px] font-medium text-neutral-800 truncate group-hover:text-neutral-900 transition-colors">{r.title}</p>
-                              {sharedTags.length > 0 ? (
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {sharedTags.map(tag => (
-                                    <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
-                                      style={{ backgroundColor: `${rc.accent}18`, color: rc.accent }}>{tag}</span>
-                                  ))}
-                                </div>
-                              ) : type === 'explicit' ? (
-                                <p className="text-[9.5px] text-neutral-400 mt-0.5">明示的に接続</p>
-                              ) : null}
-                            </div>
-                            <ArrowLeft size={10} className="rotate-180 text-neutral-300 group-hover:text-neutral-500 mt-1.5 shrink-0 transition-colors" />
-                          </button>
+                            {r.summary && (
+                              <div className="overflow-hidden max-h-0 group-hover/card:max-h-24 transition-all duration-200 px-2.5 pb-0 group-hover/card:pb-2.5">
+                                <p className="text-[10.5px] text-neutral-500 leading-relaxed border-t border-neutral-100 pt-2">
+                                  {r.summary}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         )
                       })}
                     </div>
