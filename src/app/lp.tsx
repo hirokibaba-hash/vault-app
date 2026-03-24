@@ -516,15 +516,15 @@ function OrganizeTab() {
     {
       key: 'ai' as const,
       cards: [
-        { title: 'GPT-4o Fine-tuning 実験メモ', summary: '独自データ1200件で検証。精度が標準比23%向上。コスト効率も改善された点を記録。', assignees: [{ name: 'K', color: '#f59e0b' }], date: 'Mar 12' },
-        { title: 'AIチャット UI リサーチ', summary: 'Copilot・Perplexity・Claude UIを比較分析。プロンプト入力とコンテキスト表示のベストプラクティス。', assignees: [{ name: 'H', color: '#8b5cf6' }, { name: 'R', color: '#f59e0b' }], date: 'Mar 3' },
+        { title: 'GPT-4o Fine-tuning 実験メモ', summary: '独自データ1200件で検証。精度が標準比23%向上。コスト効率も改善された点を記録。', assignees: [{ name: 'K', color: '#f59e0b' }], date: 'Mar 12', hasPage: false },
+        { title: 'AIチャット UI リサーチ', summary: 'Copilot・Perplexity・Claude UIを比較分析。プロンプト入力とコンテキスト表示のベストプラクティス。', assignees: [{ name: 'H', color: '#8b5cf6' }, { name: 'R', color: '#f59e0b' }], date: 'Mar 3', hasPage: false },
       ],
     },
     {
       key: 'backend' as const,
       cards: [
-        { title: 'Supabase RLS 設計ガイド', summary: 'Row Level Securityで組織単位のデータ分離。サービスロールとanonキーの使い分けを整理。', assignees: [{ name: 'M', color: '#10b981' }, { name: 'K', color: '#ef4444' }], date: 'Mar 8' },
-        { title: 'Edge Functions 設計メモ', summary: 'Deno Deployベースの関数設計。レイテンシ削減のためのリージョン選定と認証フローのまとめ。', assignees: [{ name: 'K', color: '#ef4444' }], date: 'Mar 5' },
+        { title: 'Supabase RLS 設計ガイド', summary: 'Row Level Securityで組織単位のデータ分離。サービスロールとanonキーの使い分けを整理。', assignees: [{ name: 'M', color: '#10b981' }, { name: 'K', color: '#ef4444' }], date: 'Mar 8', hasPage: false },
+        { title: 'Edge Functions 設計メモ', summary: 'Deno Deployベースの関数設計。レイテンシ削減のためのリージョン選定と認証フローのまとめ。', assignees: [{ name: 'K', color: '#ef4444' }], date: 'Mar 5', hasPage: false },
       ],
     },
   ]
@@ -991,7 +991,7 @@ const NAV_LINKS = [
 ]
 
 export default function LPPage() {
-  const [scrolled, setScrolled] = useState(false)
+  const [_scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 

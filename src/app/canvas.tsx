@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
-import { Plus, ZoomIn, ZoomOut, Maximize2, Search, X, ExternalLink, Sparkles, CalendarDays, Network, LayoutGrid, Clock, Link2, RotateCcw, Layers, FileText, Trash2, Edit3, GripVertical, BookmarkPlus, Library } from 'lucide-react'
+import { Plus, ZoomIn, ZoomOut, Maximize2, Search, X, ExternalLink, Sparkles, CalendarDays, Network, LayoutGrid, Clock, Link2, RotateCcw, Layers, FileText, Trash2, Edit3, GripVertical, BookmarkPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -424,7 +424,7 @@ function AddDialog({ onClose, onSave, initialUrl }: {
             {!preview && (
               <Button
                 variant="outline"
-                onClick={handleFetch}
+                onClick={() => handleFetch()}
                 disabled={fetching || !isUrl}
                 className="shrink-0 gap-1.5"
               >
